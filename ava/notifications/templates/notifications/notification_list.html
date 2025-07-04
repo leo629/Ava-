@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<h2>Notifications</h2>
+<ul>
+  {% for note in notifications %}
+    <li>
+      <strong>{{ note.notification_type|title }}</strong> - {{ note.message }}
+      <small>{{ note.timestamp|timesince }} ago</small>
+    </li>
+  {% empty %}
+    <li>No notifications yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

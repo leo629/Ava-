@@ -1,0 +1,135 @@
+html.dark body {
+  background-color: #111827;
+  color: white;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: black;
+  color: #ffffff;
+  padding: 0.1rem 0; /* Reduce vertical space */
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.1rem 0rem; /* Less padding */
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  display: inline-block;
+  font-size: 16px; /* Smaller text */
+  padding: 0.3rem 0.1rem;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.nav-toggle {
+  display: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: white;
+}
+
+.nav-links-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.nav-links-mobile.show {
+  display: flex;
+}
+
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+}
+
+.notification-count {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background: red;
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 50%;
+  display: none;
+}
+
+.notification-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: white;
+  color: black;
+  width: 250px;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 5px;
+  z-index: 1001;
+}
+
+.notification-dropdown p {
+  padding: 10px;
+  margin: 0;
+  border-bottom: 1px solid #eee;
+}
+
+.dark .notification-dropdown {
+  background: #333;
+  color: white;
+}
+
+.dark nav {
+  background-color: #1f2937;
+}
+
+.dark-toggle {
+  margin-left: 1rem;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: white;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  .nav-toggle {
+    display: block;
+  }
+}

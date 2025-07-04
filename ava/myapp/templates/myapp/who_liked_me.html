@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-xl font-bold mb-4">People Who Liked You</h2>
+
+{% if likes %}
+  <ul class="space-y-4">
+    {% for match in likes %}
+      <li class="bg-white dark:bg-gray-800 shadow p-4 rounded">
+        <p><strong>{{ match.user.username }}</strong> liked you.</p>
+        <a href="{% url 'like_back' match.user.id %}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Like Back</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No one has liked you yet 😢</p>
+{% endif %}
+{% endblock %}

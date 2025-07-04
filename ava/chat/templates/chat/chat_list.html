@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Your Chats{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1rem;">Your Conversations</h2>
+<ul style="list-style: none; padding: 0;">
+  {% for entry in chat_users %}
+    <li style="margin-bottom: 20px;">
+      <a href="{% url 'chat_room' entry.user.username %}" style="text-decoration: none; color: inherit;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center;">
+            <img src="{% if entry.user.profile.profile_pic %}{{ entry.user.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}"
+                 style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+            <div>
+              <strong>{{ entry.user.username }}</strong><br>
+              <small>
+                {% if entry.last_message %}
+                  {{ entry.last_message.text|truncatechars:40 }}<br>
+                  <em style="color: gray;">{{ entry.last_message.timestamp|date:"M d, H:i" }}</em>
+                {% else %}
+                  No messages yet.
+                {% endif %}
+              </small>
+            </div>
+          </div>
+
+          {% if entry.unread_count > 0 %}
+            <span style="background-color: red; color: white; border-radius: 50%; padding: 5px 10px; font-size: 12px;">
+              {{ entry.unread_count }}
+            </span>
+          {% endif %}
+        </div>
+      </a>
+    </li>
+  {% empty %}
+    <li>No chats yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

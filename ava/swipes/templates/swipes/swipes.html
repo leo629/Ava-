@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div id="swipe-container" class="max-w-sm mx-auto mt-10 text-center">
+    {% if profile %}
+      <div id="profile-card" class="bg-white p-6 rounded shadow-md">
+        <img src="{{ profile.avatar.url }}" class="rounded-full w-24 h-24 mx-auto mb-4" alt="{{ profile.user.username }}">
+        <h2 class="text-xl font-bold">{{ profile.user.username }}</h2>
+        <p class="text-sm text-gray-600">{{ profile.bio|default:"No bio" }}</p>
+        <input type="hidden" id="profile-id" value="{{ profile.id }}">
+        <div class="flex justify-center space-x-4 mt-4">
+          <button onclick="sendSwipe('dislike')" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Dislike</button>
+          <button onclick="sendSwipe('like')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Like</button>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-center text-gray-500">No more profiles to swipe.</p>
+    {% endif %}
+  </div>
+
+  <script>
+    function sendSwipe(action) {
+      const profileId = document.getElementById('profile-id').value;
+
+      fetch("{% url 'swipe_action' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: new URLSearchParams({
+          profile_id: profileId,
+          action: action
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          location.reload();  // refresh to load next profile
+        }
+      });
+    }
+  </script>
+{% endblock %}

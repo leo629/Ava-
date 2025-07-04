@@ -1,0 +1,13 @@
+<h2>Inbox</h2>
+<ul>
+  {% for msg in messages %}
+    <li>
+      <a href="{% url 'chat:message_detail' msg.sender.id %}">
+        {{ msg.sender.username }} - {{ msg.content|truncatewords:5 }}
+        {% if not msg.is_read %} <strong>(new)</strong> {% endif %}
+      </a>
+    </li>
+  {% empty %}
+    <li>No messages.</li>
+  {% endfor %}
+</ul>

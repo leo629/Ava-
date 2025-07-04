@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Your Matches ❤️</h2>
+
+    {% if matches %}
+        <div class="row">
+            {% for user in matches %}
+                {% with profile=user.profile %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <img 
+                                src="{{ profile.profile_pic.url|default:'/static/img/default.jpg' }}" 
+                                class="card-img-top" 
+                                alt="{{ user.username }}"
+                                style="height: 250px; object-fit: cover;"
+                            >
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ user.username }}</h5>
+                                {% if profile.age %}<p class="card-text">Age: {{ profile.age }}</p>{% endif %}
+                                {% if profile.city %}<p class="card-text">Location: {{ profile.city }}</p>{% endif %}
+                                <a href="{% url 'profile' user.username %}" class="btn btn-primary">View Profile</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No matches yet. Keep swiping! 💔</p>
+    {% endif %}
+</div>
+{% endblock %}

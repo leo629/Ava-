@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/eprofile.css' %}">
+
+<div class="edit-profile-container">
+  <h2 class="section-title">Edit Your Profile</h2>
+
+  <!-- Profile Edit Form -->
+  <form method="post" enctype="multipart/form-data" class="profile-form">
+    {% csrf_token %}
+    
+    {% for field in edit_form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.errors %}
+          <div class="form-error">{{ field.errors }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn save-btn">Save Changes</button>
+  </form>
+
+  <!-- Gallery Buttons -->
+  <div class="gallery-buttons">
+    <button class="btn gallery-btn" onclick="toggleSection('upload-section')">Upload to Gallery</button>
+    <button class="btn gallery-btn" onclick="toggleSection('view-section')">Your Gallery</button>
+  </div>
+
+  <!-- Upload to Gallery Form -->
+  <div id="upload-section" class="gallery-section" style="display: none;">
+    <h4>Upload a New Image</h4>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ gallery_form.as_p }}
+      <button type="submit" class="btn upload-btn">Upload</button>
+    </form>
+  </div>
+
+  <!-- View Gallery -->
+  <div id="view-section" class="gallery-section" style="display: none;">
+    <h4>Your Uploaded Images</h4>
+    <div class="gallery-grid">
+      {% for image in user_gallery %}
+        <div class="gallery-card">
+          <img src="{{ image.image.url }}" alt="Gallery Image" class="gallery-img">
+          {% if image.caption %}
+            <p class="gallery-caption">{{ image.caption }}</p>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p>You haven't uploaded any images yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleSection(sectionId) {
+    document.getElementById("upload-section").style.display = (sectionId === "upload-section") ? "block" : "none";
+    document.getElementById("view-section").style.display = (sectionId === "view-section") ? "block" : "none";
+  }
+</script>
+{% endblock %}

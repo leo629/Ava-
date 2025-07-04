@@ -1,0 +1,6 @@
+<h2>Conversation with {{ sender.username }}</h2>
+<ul>
+  {% for msg in messages %}
+    <li>{{ msg.timestamp }} - {{ msg.content }}</li>
+  {% endfor %}
+</ul>
