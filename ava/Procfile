@@ -1,1 +1,2 @@
-web: gunicorn ava.wsgi
+web: daphne ava.asgi:application
+
