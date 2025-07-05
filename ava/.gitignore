@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.DS_Store
+*.exe
+# Django
+*.sqlite3
+/media/
+db.sqlite3
+.env
+
+# OS
+Thumbs.db
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Environment
+.env
+
+# Ignore all EXE files
