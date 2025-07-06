@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ava-dating-site
+    name: Ava-
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn ava.wsgi
