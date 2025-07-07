@@ -7,8 +7,8 @@ SECRET_KEY = 'your-secret-key'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
 # Static & Media
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    'django.contrib.humanize', 
+    'django.contrib.humanize',
 
     # Third-party apps
     "allauth",
@@ -56,9 +56,12 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",  # Allauth
 ]
 # ✅ Updated Django 5.1 Authentication Settings
-ACCOUNT_LOGIN_METHODS = {"username", "email"}  # Allow login with username or email
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]  # Required signup fields
-ACCOUNT_EMAIL_VERIFICATION = "optional"  # Change to "mandatory" if you need email confirmation
+# Allow login with username or email
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*",
+                         "password1*", "password2*"]  # Required signup fields
+# Change to "mandatory" if you need email confirmation
+ACCOUNT_EMAIL_VERIFICATION = "optional"
 
 
 ACCOUNT_FORMS = {
@@ -98,7 +101,8 @@ ROOT_URLCONF = "ava.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates'],  # Optional if you have global templates
+        # Optional if you have global templates
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -143,7 +147,8 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "your-email@gmail.com"
-EMAIL_HOST_PASSWORD = "your-app-password"  # Use Gmail App Password (not your real password!)
+# Use Gmail App Password (not your real password!)
+EMAIL_HOST_PASSWORD = "your-app-password"
 
 # Default primary key
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
