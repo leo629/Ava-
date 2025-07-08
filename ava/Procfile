@@ -1,2 +1,3 @@
-web: gunicorn ava.wsgi:application
+web: gunicorn --chdir ava ava.wsgi:application
+
 
