@@ -1,1 +1,2 @@
-web: gunicorn ava.wsgi
+web: gunicorn ava.wsgi:application
+
