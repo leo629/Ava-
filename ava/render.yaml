@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: Ava-
+    name: Ava
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn ava.wsgi
