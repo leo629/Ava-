@@ -1,4 +1,3 @@
-python_version == "3.11.*"
 Django==5.1.7
 asgiref==3.8.1
 daphne==3.0.2
