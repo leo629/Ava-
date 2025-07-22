@@ -1,3 +1,4 @@
-web daphne -b 0.0.0.0 -p $PORT ava.asgi:application
+daphne -b 0.0.0.0 -p $PORT myproject.asgi:application
+
 
 
