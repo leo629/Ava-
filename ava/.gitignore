@@ -27,3 +27,4 @@ Thumbs.db
 .env
 
 # Ignore all EXE files
+"META-INF/" 
