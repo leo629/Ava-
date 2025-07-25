@@ -3,12 +3,12 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key'
+SECRET_KEY = 'what9033kn03'
 
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['onrender.com', 'localhost', '127.0.0.1']
 # Static & Media
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
@@ -72,7 +72,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Channels config
-ASGI_APPLICATION = "ava.asgi.application"
+ASGI_APPLICATION = "asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
@@ -96,7 +96,7 @@ MIDDLEWARE = [
 ]
 
 # URL & Templates
-ROOT_URLCONF = "ava.urls"
+ROOT_URLCONF = "urls"
 
 TEMPLATES = [
     {
@@ -115,7 +115,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "ava.wsgi.application"
+WSGI_APPLICATION = "wsgi.application"
 
 # Database
 DATABASES = {
@@ -146,7 +146,7 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "your-email@gmail.com"
+EMAIL_HOST_USER = "williamfocus12@gmail.com"
 # Use Gmail App Password (not your real password!)
 EMAIL_HOST_PASSWORD = "your-app-password"
 
@@ -155,3 +155,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Optional custom user model (uncomment if you create one)
 # AUTH_USER_MODEL = 'myapp.CustomUser'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
