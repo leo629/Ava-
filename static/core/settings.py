@@ -72,7 +72,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Channels config
-ASGI_APPLICATION = "asgi.application"
+ASGI_APPLICATION = "core.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
@@ -96,7 +96,7 @@ MIDDLEWARE = [
 ]
 
 # URL & Templates
-ROOT_URLCONF = "urls"
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
@@ -115,7 +115,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "wsgi.application"
+WSGI_APPLICATION = "core.wsgi.application"
 
 # Database
 DATABASES = {
