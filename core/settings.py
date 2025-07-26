@@ -13,6 +13,10 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'ava-nvqb.onrender.com',  # ✅ your Render subdomain
 ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://ava-nvqb.onrender.com",  # ✅ Your Render subdomain
+]
+
 
 # Installed Apps
 INSTALLED_APPS = [
