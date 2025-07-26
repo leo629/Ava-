@@ -71,8 +71,6 @@ ACCOUNT_FORMS = {
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-# Channels config
-ASGI_APPLICATION = "core.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
@@ -158,3 +156,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+ASGI_APPLICATION = 'core.asgi.application'
