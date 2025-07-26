@@ -8,8 +8,11 @@ SECRET_KEY = 'what9033kn03'
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['onrender.com', 'localhost', '127.0.0.1']
-# Static & Media
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'ava-nvqb.onrender.com',  # ✅ your Render subdomain
+]
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
