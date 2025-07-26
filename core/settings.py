@@ -13,10 +13,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'ava-nvqb.onrender.com',  # ✅ your Render subdomain
 ]
-STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Installed Apps
 INSTALLED_APPS = [
@@ -162,3 +158,8 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 ASGI_APPLICATION = 'core.asgi.application'
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
