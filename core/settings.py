@@ -13,6 +13,10 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'ava-nvqb.onrender.com',  # ✅ your Render subdomain
 ]
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+
 CSRF_TRUSTED_ORIGINS = [
     "https://ava-nvqb.onrender.com",  # ✅ Your Render subdomain
 ]
@@ -79,7 +83,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('ava-nvqb.onrender.com')],
         },
     },
 }
