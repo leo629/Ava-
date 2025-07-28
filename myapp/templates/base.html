@@ -32,24 +32,27 @@
 <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 font-sans">
   <!-- Navbar -->
   <nav class="bg-black text-white py-3 shadow-lg dark:bg-gray-800">
-    <div class="container mx-auto flex justify-between items-center px-6">
-      <a href="/" class="text-xl font-bold">discover</a>
-      <ul class="flex space-x-4 text-sm items-center">
-        {% if user.is_authenticated %}
-          <li><a href="{% url 'user_profile' %}" class="hover:text-gray-400">Profile</a></li>
-          <li><a href="{% url 'edit_profile' %}" class="hover:text-gray-400">Edit</a></li>
-          <li><a href="{% url 'account_logout' %}" class="hover:text-gray-400">Logout</a></li>
-          <li><a href="{% url 'chat_list' %}" class="hover:text-gray-400">💬</a></li>
-          <li><a href="{% url 'swipe_page' %}" class="hover:text-gray-400">Swipe</a></li>
-          <li><a href="{% url 'who_liked_me' %}" class="hover:text-gray-400">Likes</a></li>
-          <li><a href="{% url 'match_results' %}" class="hover:text-gray-400">Matches</a></li>
-        {% else %}
-          <li><a href="{% url 'account_login' %}" class="hover:text-gray-400">Login</a></li>
-          <li><a href="{% url 'account_signup' %}" class="hover:text-gray-400">Sign Up</a></li>
-        {% endif %}
+  <div class="container mx-auto px-6 flex justify-between items-center">
+    <!-- Logo -->
+    <a href="/" class="text-xl font-bold">discover</a>
+
+    <!-- Hamburger Menu (mobile only) -->
+    <button id="menu-toggle" class="md:hidden text-white text-2xl focus:outline-none">
+      ☰
+    </button>
+
+    <!-- Navigation Links -->
+    <ul id="nav-links" class="hidden md:flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 text-sm mt-4 md:mt-0">
+      {% if user.is_authenticated %}
+        <li><a href="{% url 'user_profile' %}" class="hover:text-gray-400">Profile</a></li>
+        <li><a href="{% url 'edit_profile' %}" class="hover:text-gray-400">Edit</a></li>
+        <li><a href="{% url 'account_logout' %}" class="hover:text-gray-400">Logout</a></li>
+        <li><a href="{% url 'chat_list' %}" class="hover:text-gray-400">💬</a></li>
+        <li><a href="{% url 'swipe_page' %}" class="hover:text-gray-400">Swipe</a></li>
+        <li><a href="{% url 'who_liked_me' %}" class="hover:text-gray-400">Likes</a></li>
+        <li><a href="{% url 'match_results' %}" class="hover:text-gray-400">Matches</a></li>
 
         <!-- 🔔 Notification Bell -->
-        {% if user.is_authenticated %}
         <li class="relative">
           <div id="notification-wrapper" class="relative cursor-pointer">
             <span id="notification-bell" class="text-xl">🔔</span>
@@ -59,15 +62,18 @@
             </div>
           </div>
         </li>
-        {% endif %}
+      {% else %}
+        <li><a href="{% url 'account_login' %}" class="hover:text-gray-400">Login</a></li>
+        <li><a href="{% url 'account_signup' %}" class="hover:text-gray-400">Sign Up</a></li>
+      {% endif %}
 
-        <!-- 🌙 Dark Mode -->
-        <li>
-          <button id="darkModeToggle" class="ml-2 bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition">🌙</button>
-        </li>
-      </ul>
-    </div>
-  </nav>
+      <!-- 🌙 Dark Mode -->
+      <li>
+        <button id="darkModeToggle" class="ml-2 bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition">🌙</button>
+      </li>
+    </ul>
+  </div>
+</nav>
 
   <!-- Page Content -->
   <main class="container mx-auto mt-6 px-6 animate-fade-in">
@@ -149,6 +155,16 @@
         });
       }
     });
+  </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("menu-toggle");
+    const nav = document.getElementById("nav-links");
+
+    toggle.addEventListener("click", () => {
+      nav.classList.toggle("hidden");
+    });
+  });
   </script>
   {% endblock %}
 </body>
