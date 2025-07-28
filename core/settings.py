@@ -11,14 +11,14 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'ava-nvqb.onrender.com',  # ✅ your Render subdomain
+    'ava-nvqb.onrender.com',  
 ]
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+REDIS_URL = os.getenv("REDIS_URL", redis-cli --tls -u redis://default:********@gusc1-daring-guppy-32288.upstash.io:32288)
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://ava-nvqb.onrender.com",  # ✅ Your Render subdomain
+    "https://ava-nvqb.onrender.com",  # ✅
 ]
 
 
