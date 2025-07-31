@@ -160,7 +160,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "williamfocus12@gmail.com"
 # Use Gmail App Password (not your real password!)
-EMAIL_HOST_PASSWORD = "your-app-password"
+EMAIL_HOST_PASSWORD = "qdactiziexdwauiz"
 
 # Default primary key
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
