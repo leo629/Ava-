@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import urllib.parse as urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -13,6 +14,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'ava-nvqb.onrender.com',  
 ]
+
 
 REDIS_URL = os.getenv(
     "REDIS_URL",
@@ -85,6 +87,8 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             "hosts": [('ava-nvqb.onrender.com')],
+            "password": url.password,
+            "ssl": True,
         },
     },
 }
