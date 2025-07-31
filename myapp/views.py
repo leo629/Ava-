@@ -130,19 +130,6 @@ class CustomSignupView(SignupView):
         return reverse('home')  # Redirect to home after signup
 
 
-def register(request):
-    if request.method == 'POST':
-        form = CustomSignupForm(request.POST, request.FILES)
-        if form.is_valid():
-            user = form.save(request)
-            login(request, user)
-            # Redirect to home after manual registration
-            return redirect('home')
-    else:
-        form = CustomSignupForm()
-    return render(request, 'myapp/register.html', {'form': form})
-
-
 @login_required
 def profile(request, username=None):
     user = get_object_or_404(
