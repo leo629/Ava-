@@ -86,8 +86,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('ava-nvqb.onrender.com')],
-            "password": url.password,
+            "hosts": [('ava-nvqb.onrender.com')]
             "ssl": True,
         },
     },
