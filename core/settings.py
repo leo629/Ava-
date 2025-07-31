@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "crispy_forms",
+    "crispy_tailwind",
     "formtools",
     "channels",
     "django_countries",
@@ -55,8 +56,8 @@ INSTALLED_APPS = [
 ]
 
 # Crispy Forms config
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 # Allauth config
 SITE_ID = 1
