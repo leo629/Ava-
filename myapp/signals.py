@@ -7,7 +7,8 @@ from .models import Profile  # import your Profile model
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         # Create a new profile if this is a new user
-        Profile.objects.create(user=instance)
+        Profile.objects.get_or_create(user=instance)
+
     else:
         # Try to access profile, or create if it doesn't exist
         try:
