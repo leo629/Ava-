@@ -1,71 +1,41 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% load static %}
 
 {% block content %}
-<div class="signup-container">
-    <h2>Create Your Account</h2>
+<div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Create Your Account</h2>
     <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-grid">
-            {{ form.username|as_crispy_field }}
-            {{ form.email|as_crispy_field }}
-            {{ form.password1|as_crispy_field }}
-            {{ form.password2|as_crispy_field }}
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{ form.username|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+        {{ form.password1|as_crispy_field }}
+        {{ form.password2|as_crispy_field }}
+        {{ form.phone_number|as_crispy_field }}
+        {{ form.bio|as_crispy_field }}
+        {{ form.gender|as_crispy_field }}
+        {{ form.country|as_crispy_field }}
+        {{ form.profile_pic|as_crispy_field }}
+      </div>
 
-            {{ form.phone_number|as_crispy_field }}
-            {{ form.bio|as_crispy_field }}
-            {{ form.gender|as_crispy_field }}
-            {{ form.country|as_crispy_field }}
-            {{ form.profile_pic|as_crispy_field }}
+      <h4 class="text-lg font-semibold mt-6 mb-3 text-gray-700 dark:text-white">Survey Questions</h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{ form.interests|as_crispy_field }}
+        {{ form.hobbies|as_crispy_field }}
+        {{ form.want_kids|as_crispy_field }}
+        {{ form.relationship_goal|as_crispy_field }}
+        {{ form.lifestyle|as_crispy_field }}
+      </div>
 
-            <h3>Survey Questions</h3>
-            {{ form.interests|as_crispy_field }}
-            {{ form.hobbies|as_crispy_field }}
-            {{ form.want_kids|as_crispy_field }}
-            {{ form.relationship_goal|as_crispy_field }}
-            {{ form.lifestyle|as_crispy_field }}
-        </div>
-        <button type="submit" class="btn-primary">Register</button>
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded mt-6">
+        Register
+      </button>
     </form>
-    <p class="login-link">Already have an account? <a href="{% url 'account_login' %}">Login here</a>.</p>
+    <p class="text-sm text-center mt-4 text-gray-600 dark:text-gray-300">
+      Already have an account?
+      <a href="{% url 'account_login' %}" class="text-blue-500 hover:underline">Login</a>
+    </p>
+  </div>
 </div>
 {% endblock %}
-
-<style>
-.signup-container {
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.08);
-}
-.signup-container h2 {
-    text-align: center;
-    margin-bottom: 25px;
-    font-size: 28px;
-}
-.form-grid > div {
-    margin-bottom: 15px;
-}
-.btn-primary {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background-color: #007bff;
-    border: none;
-    color: #fff;
-    font-weight: bold;
-    font-size: 16px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-.btn-primary:hover {
-    background-color: #0056b3;
-}
-.login-link {
-    text-align: center;
-    margin-top: 20px;
-}
-</style>
