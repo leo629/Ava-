@@ -1,10 +1,21 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
+
 {% block content %}
-  <h2>Login</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-  </form>
-  <a href="{% url 'account_signup' %}">Don't have an account? Sign up</a>
+<div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Login</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded mt-4">
+        Login
+      </button>
+    </form>
+    <p class="text-sm text-center mt-4 text-gray-600 dark:text-gray-300">
+      Don't have an account?
+      <a href="{% url 'account_signup' %}" class="text-blue-500 hover:underline">Sign up</a>
+    </p>
+  </div>
+</div>
 {% endblock %}
