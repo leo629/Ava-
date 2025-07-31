@@ -12,6 +12,7 @@ channels_redis==4.2.1
 charset-normalizer==3.4.2
 constantly==23.10.4
 cryptography==45.0.5
+crispy-tailwind==1.0.3
 daphne==3.0.2
 Django==5.2.4
 django-allauth==0.62.1
