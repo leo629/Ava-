@@ -13,6 +13,10 @@ import json
 from notifications.views import send_notification
 import random
 
+from .utils import calculate_distance
+
+@login_required
+
 
 @csrf_exempt
 @login_required
@@ -202,8 +206,22 @@ def edit_profile(request):
 @login_required
 def home(request):
     users = User.objects.exclude(username=request.user.username)
-    return render(request, 'myapp/home.html', {'users': users})
+    viewer_profile = request.user.profile
 
+    nearby_users = []
+    for u in users:
+        profile = u.profile
+        distance = calculate_distance(
+            viewer_profile.latitude, viewer_profile.longitude,
+            profile.latitude, profile.longitude
+        )
+        nearby_users.append({
+            'user': u,
+            'distance': distance,
+            'city': profile.city or "Unknown"
+        })
+        
+    return render(request, 'myapp/home.html', {"nearby_users": nearby_users})
 
 @login_required
 def matched_users_view(request):
