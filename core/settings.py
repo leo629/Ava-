@@ -18,7 +18,7 @@ ALLOWED_HOSTS = [
 
 REDIS_URL = os.getenv(
     "REDIS_URL",
-    "redis://default:********@gusc1-daring-guppy-32288.upstash.io:32288"
+    "redis://default:93e85456592f4d3d95eac5f61def1720@gusc1-daring-guppy-32288.upstash.io:32288"
 )
 CSRF_TRUSTED_ORIGINS = [
     "https://ava-nvqb.onrender.com",  # ✅
@@ -87,7 +87,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis-cli --tls -u redis://default:********@gusc1-daring-guppy-32288.upstash.io:32288')],
+            "hosts": [('redis-cli --tls -u redis://default:93e85456592f4d3d95eac5f61def1720@gusc1-daring-guppy-32288.upstash.io:32288')],
         },
     },
 }
