@@ -87,7 +87,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('ava-nvqb.onrender.com')],
+            "hosts": [('redis-cli --tls -u redis://default:********@gusc1-daring-guppy-32288.upstash.io:32288')],
         },
     },
 }
