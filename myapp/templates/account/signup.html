@@ -4,19 +4,11 @@
 {% block content %}
 <div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
   <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-      Create Your Account
-    </h2>
-
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Create Your Account</h2>
     <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
       {{ form|crispy }}
-
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded mt-6">
-        Register
-      </button>
     </form>
-
     <p class="text-sm text-center mt-4 text-gray-600 dark:text-gray-300">
       Already have an account?
       <a href="{% url 'account_login' %}" class="text-blue-500 hover:underline">Login</a>
@@ -24,3 +16,4 @@
   </div>
 </div>
 {% endblock %}
+
