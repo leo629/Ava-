@@ -16,10 +16,7 @@ ALLOWED_HOSTS = [
 ]
 
 
-REDIS_URL = os.getenv(
-    "REDIS_URL",
-    "rediss://default:93e85456592f4d3d95eac5f61def1720@gusc1-daring-guppy-32288.upstash.io:32288"
-)
+
 CSRF_TRUSTED_ORIGINS = [
     "https://ava-nvqb.onrender.com",  # ✅
 ]
