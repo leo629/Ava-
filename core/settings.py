@@ -87,7 +87,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('os.getenv("rediss://default:93e85456592f4d3d95eac5f61def1720@gusc1-daring-guppy-32288.upstash.io:32288"')],
+             "hosts": [os.getenv("REDIS_URL", "redis://localhost:6379")],
         },
     },
 }
