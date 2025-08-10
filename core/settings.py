@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "crispy_forms",
+    
     "crispy_tailwind",
+    "crispy_forms",
     "formtools",
     "channels",
     "django_countries",
