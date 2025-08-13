@@ -50,3 +50,5 @@ tzdata==2025.2
 urllib3==2.5.0
 zope.interface==7.2
 zstandard==0.23.0
+
+django-crispy-tailwind
