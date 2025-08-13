@@ -16,6 +16,7 @@ Django==5.2.4
 django-allauth==0.62.1
 django-cors-headers==4.7.0
 django-countries==7.6.1
+django-crispy-tailwind==2.0.1
 django-crispy-forms==2.4
 django-formtools==2.5.1
 djangorestframework==3.15.2
@@ -51,4 +52,4 @@ urllib3==2.5.0
 zope.interface==7.2
 zstandard==0.23.0
 
-django-crispy-tailwind
+
