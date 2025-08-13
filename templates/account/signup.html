@@ -1,50 +1,22 @@
+
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% load static %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="signup-container">
-        <h2 class="text-center mb-4">Create Your Account</h2>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="row g-3">
-                <div class="col-md-6">{{ form.username|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.password1|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.password2|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.phone_number|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.bio|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.gender|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.country|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.profile_pic|as_crispy_field }}</div>
-            </div>
+<div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Create Your Account</h2>
+    
 
-            <h4 class="mt-4">Survey Questions</h4>
-            <div class="row g-3">
-                <div class="col-md-6">{{ form.interests|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.hobbies|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.want_kids|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.relationship_goal|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.lifestyle|as_crispy_field }}</div>
-            </div>
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+      {% crispy form %}
+    </form>
 
-            <button type="submit" class="btn btn-primary w-100 mt-4">Register</button>
-        </form>
-        <p class="text-center mt-3">
-            Already have an account? <a href="{% url 'account_login' %}">Login here</a>.
-        </p>
-    </div>
+    <p class="text-sm text-center mt-4 text-gray-600 dark:text-gray-300">
+      Already have an account?
+      <a href="{% url 'account_login' %}" class="text-blue-500 hover:underline">Login</a>
+    </p>
+  </div>
 </div>
 {% endblock %}
-
-<style>
-.signup-container {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-</style>

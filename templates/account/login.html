@@ -1,10 +1,32 @@
 {% extends "base.html" %}
+{% load static %}
+{% block title %}Login{% endblock %}
+
 {% block content %}
-  <h2>Login</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+<form method="post" class="login-form">
+  {% csrf_token %}
+  <div class="imgcontainer">
+    <img src="{% static 'img/avatar.png' %}" alt="Avatar" class="avatar">
+  </div>
+
+  <div class="container">
+    <label for="id_login"><b>Username or Email</b></label>
+    {{ form.login }}
+
+    <label for="id_password"><b>Password</b></label>
+    {{ form.password }}
+
     <button type="submit">Login</button>
-  </form>
-  <a href="{% url 'account_signup' %}">Don't have an account? Sign up</a>
+    <label>
+      <input type="checkbox" name="remember" checked="checked"> Remember me
+    </label>
+  </div>
+
+  <div class="container" style="background-color:#f1f1f1">
+    <button type="button" class="cancelbtn" onclick="window.location.href='/'">Cancel</button>
+    <span class="psw">Forgot <a href="{% url 'account_reset_password' %}">password?</a></span>
+  </div>
+</form>
 {% endblock %}
