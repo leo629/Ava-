@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import urllib.parse as urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -8,12 +9,17 @@ SECRET_KEY = 'what9033kn03'
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['onrender.com', 'localhost', '127.0.0.1']
-# Static & Media
-STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'ava-nvqb.onrender.com',
+]
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://ava-nvqb.onrender.com",  # ✅
+]
+
 
 # Installed Apps
 INSTALLED_APPS = [
@@ -32,8 +38,11 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+
+    "crispy_tailwind",
     "crispy_forms",
     "formtools",
+    "crispy_bootstrap5",
     "channels",
     "django_countries",
 
@@ -76,7 +85,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [os.getenv("REDIS_URL", "redis://localhost:6379")],
         },
     },
 }
@@ -92,7 +101,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
-
+if os.getenv("RENDER"):
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 # URL & Templates
 ROOT_URLCONF = "core.urls"
 
@@ -146,7 +157,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "williamfocus12@gmail.com"
 # Use Gmail App Password (not your real password!)
-EMAIL_HOST_PASSWORD = "your-app-password"
+EMAIL_HOST_PASSWORD = "qdactiziexdwauiz"
 
 # Default primary key
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -157,3 +168,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 ASGI_APPLICATION = 'core.asgi.application'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
