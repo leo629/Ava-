@@ -5,12 +5,12 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/login.css' %}">
 
-<form method="post" class="login-form">
+<form id="login-form" method="post" class="login-form">
   {% csrf_token %}
   <div class="imgcontainer">
-    <img src="{% static 'img/avatar.png' %}" alt="Avatar" class="avatar">
+    <img src="{% static 'images/avatar.png' %}" alt="Default Picture" class="w-16 h-16 rounded-full">
   </div>
-
+  
   <div class="container">
     <label for="id_login"><b>Username or Email</b></label>
     {{ form.login }}
@@ -29,4 +29,17 @@
     <span class="psw">Forgot <a href="{% url 'account_reset_password' %}">password?</a></span>
   </div>
 </form>
+
+<!-- Loader Overlay -->
+<div id="loader-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-50">
+  <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+</div>
+
+<script>
+  document.getElementById("login-form").addEventListener("submit", function () {
+    const loader = document.getElementById("loader-overlay");
+    loader.classList.remove("opacity-0", "pointer-events-none");
+    loader.classList.add("opacity-100");
+  });
+</script>
 {% endblock %}

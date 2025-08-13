@@ -1,63 +1,129 @@
+from django.conf import settings
+from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from geopy.distance import geodesic
+import random
+import json
+
 from .forms import CustomSignupForm, ProfileForm, GalleryForm, EditProfileForm
 from .models import Profile, Gallery, Match, Like
-from allauth.account.views import SignupView
-from geopy.distance import geodesic
-from django.views.decorators.csrf import csrf_exempt
-import json
-from notifications.views import send_notification
-import random
-
 from .utils import calculate_distance
+from notifications.views import send_notification
+from allauth.account.views import SignupView
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+
+User = get_user_model()
+
+
+def landing_page(request):
+    if request.user.is_authenticated:
+        return redirect('home')  # 👈
+    return render(request, 'myapp/landing.html')
+
+
+def about(request):
+    return render(request, "myapp/about.html")
+
+
+def contact(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        message = request.POST.get("message")
+
+        # Optional: send email
+        send_mail(
+            subject=f"New Contact Message from {name}",
+            message=message,
+            from_email=email,
+            recipient_list=[settings.DEFAULT_FROM_EMAIL],
+        )
+
+        return render(request, "myapp/contact.html", {"success": True})
+
+    return render(request, "myapp/contact.html")
+
+
+def terms(request):
+    return render(request, 'myapp/terms.html')
+
+
+def privacy(request):
+    return render(request, 'myapp/privacy.html')
+
+
+# ✅ Like / Unlike user
 @login_required
-
-
 @csrf_exempt
-@login_required
 def like_user(request, user_id):
-    other = get_object_or_404(User, id=user_id)
-    Like.objects.get_or_create(from_user=request.user, to_user=other)
+    target = get_object_or_404(User, id=user_id)
 
-    if Like.objects.filter(from_user=other, to_user=request.user).exists():
-        Match.objects.get_or_create(
-            user=request.user, target=other, liked=True)
-        Match.objects.get_or_create(
-            user=other, target=request.user, liked=True)
+    if target == request.user:
+        messages.warning(request, "You cannot like yourself.")
+        return redirect("profile", username=target.username)
 
-        send_notification(sender=request.user, recipient=other, notification_type='match',
-                          message=f"You and {request.user.username} matched!")
+    like, created = Like.objects.get_or_create(
+        user=request.user, liked_user=target
+    )
 
-    return JsonResponse({"status": "liked"})
+    if not created:
+        # already liked, so unlike
+        like.delete()
+        messages.info(request, f"You unliked {target.username}.")
+    else:
+        messages.success(request, f"You liked {target.username} ❤️")
+
+        # ✅ also create Match record
+        Match.objects.update_or_create(
+            user=request.user, target=target,
+            defaults={'liked': True}
+        )
+
+        # ✅ if the other user liked back → notify about match
+        if Match.objects.filter(user=target, target=request.user, liked=True).exists():
+            send_notification(
+                sender=request.user,
+                recipient=target,
+                notification_type='match',
+                message=f"You and {request.user.username} matched!"
+            )
+
+    return redirect("profile", username=target.username)
 
 
-@csrf_exempt
+# ✅ Remove like & match
 @login_required
+@csrf_exempt
 def dislike_user(request, user_id):
     other = get_object_or_404(User, id=user_id)
-    Like.objects.filter(from_user=request.user, to_user=other).delete()
+
+    Like.objects.filter(user=request.user, liked_user=other).delete()
     Match.objects.filter(user=request.user, target=other).delete()
     Match.objects.filter(user=other, target=request.user).delete()
 
+    messages.info(request, f"You disliked {other.username}.")
     return JsonResponse({"status": "disliked"})
 
 
+# ✅ Gallery API
 @login_required
 def get_gallery_images(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-        images = [request.build_absolute_uri(
-            img.image.url) for img in user.gallery.all()]
-        return JsonResponse({'images': images})
-    except User.DoesNotExist:
-        return JsonResponse({'images': []})
+    user = get_object_or_404(User, id=user_id)
+    images = [request.build_absolute_uri(
+        img.image.url) for img in user.gallery.all()]
+    return JsonResponse({'images': images})
 
 
+# ✅ Tinder-style swipe page
 @login_required
 def swipe_page(request):
     profiles = Profile.objects.exclude(user=request.user)
@@ -81,32 +147,36 @@ def swipe_page(request):
     return render(request, 'swipe/swipe_page.html', {'swipe_data': swipe_data})
 
 
+# ✅ Who liked me
 @login_required
 def who_liked_me(request):
-    likes = Match.objects.filter(
-        target=request.user, liked=True
-    ).exclude(
-        user__in=Match.objects.filter(
-            user=request.user).values_list('target', flat=True)
-    )
+    likes = Like.objects.filter(liked_user=request.user)
     return render(request, 'myapp/who_liked_me.html', {'likes': likes})
 
 
+# ✅ Like back to confirm match
 @login_required
 def like_back(request, user_id):
     other_user = get_object_or_404(User, id=user_id)
-    Match.objects.get_or_create(
-        user=request.user, target=other_user, liked=True)
+
+    Match.objects.update_or_create(
+        user=request.user, target=other_user, defaults={'liked': True}
+    )
 
     if Match.objects.filter(user=other_user, target=request.user, liked=True).exists():
-        send_notification(sender=request.user, recipient=other_user, notification_type='match',
-                          message=f"You and {request.user.username} matched!")
+        send_notification(
+            sender=request.user,
+            recipient=other_user,
+            notification_type='match',
+            message=f"You and {request.user.username} matched!"
+        )
 
     return redirect('who_liked_me')
 
 
-@csrf_exempt
+# ✅ Save user location
 @login_required
+@csrf_exempt
 def save_location(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -122,12 +192,17 @@ def save_location(request):
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
+# ✅ Custom Signup
 class CustomSignupView(SignupView):
     form_class = CustomSignupForm
     template_name = 'myapp/signup.html'
 
     def get_success_url(self):
-        return reverse('home')  # Redirect to home after signup
+        return reverse('home')
+
+# ✅ Profile view
+
+# ... keep all your imports and existing code above ...
 
 
 @login_required
@@ -136,94 +211,149 @@ def profile(request, username=None):
         User, username=username) if username else request.user
     profile = user.profile
     gallery_images = Gallery.objects.filter(user=user)
+
+    like_count = Like.objects.filter(liked_user=user).count()
+    liked = Like.objects.filter(user=request.user, liked_user=user).exists()
+
+    # Dynamic profile completion
+    profile_fields = [
+        field.name for field in Profile._meta.get_fields()
+        if field.concrete and field.name not in ['id', 'user']
+    ]
+    filled_fields = 0
+    for field in profile_fields:
+        value = getattr(profile, field)
+        # Handle ManyToManyFields
+        if hasattr(value, 'all'):
+            if value.all().exists():
+                filled_fields += 1
+        elif value:
+            filled_fields += 1
+    total_fields = len(profile_fields)
+    profile_completion = int(
+        (filled_fields / total_fields) * 100) if total_fields > 0 else 0
+
+    # Fetch interests for display
+    interests = []
+    if hasattr(profile, 'interests'):
+        interests = list(profile.interests.all()) if hasattr(
+            profile.interests, 'all') else [profile.interests]
+
     return render(request, 'myapp/profile.html', {
         'profile_user': user,
         'profile': profile,
-        'gallery_images': gallery_images
-    })
-
-
-def is_mutual_match(user1, user2):
-    return (
-        Match.objects.filter(user=user1, target=user2, liked=True).exists() and
-        Match.objects.filter(user=user2, target=user1, liked=True).exists()
-    )
-
-
-@login_required
-def profile_view(request, username):
-    user = get_object_or_404(User, username=username)
-    profile = user.profile
-    gallery_images = Gallery.objects.filter(user=user)
-
-    return render(request, 'myapp/profile.html', {
-        'profile_user': user,
-        'profile': profile,
-        'gallery_images': gallery_images
+        'gallery_images': gallery_images,
+        'like_count': like_count,
+        'liked': liked,
+        'profile_completion': profile_completion,
+        'interests': interests,
     })
 
 
 @login_required
 def edit_profile(request):
     profile = request.user.profile
+    user_gallery = Gallery.objects.filter(user=request.user)
+
     if request.method == 'POST':
-        edit_form = EditProfileForm(
-            request.POST, request.FILES, instance=profile)
-        gallery_form = GalleryForm(request.POST, request.FILES)
-        if edit_form.is_valid():
-            edit_form.save()
-        if gallery_form.is_valid():
-            new_image = gallery_form.save(commit=False)
-            new_image.user = request.user
-            new_image.save()
-        return redirect('edit_profile')
+        if 'edit_profile_submit' in request.POST:
+            edit_form = EditProfileForm(
+                request.POST, request.FILES, instance=profile)
+            if edit_form.is_valid():
+                edit_form.save()
+                messages.success(request, "Profile updated!")
+                return redirect('edit_profile')
+            gallery_form = GalleryForm()
+        elif 'gallery_upload_submit' in request.POST:
+            gallery_form = GalleryForm(request.POST, request.FILES)
+            if gallery_form.is_valid():
+                new_image = gallery_form.save(commit=False)
+                new_image.user = request.user
+                new_image.save()
+                messages.success(request, "Image uploaded!")
+                return redirect('edit_profile')
+            edit_form = EditProfileForm(instance=profile)
     else:
         edit_form = EditProfileForm(instance=profile)
         gallery_form = GalleryForm()
 
-    user_gallery = Gallery.objects.filter(user=request.user)
+    # ✅ Profile completion calculation
+    fields = [
+        profile.bio,
+        profile.hobbies,
+        profile.country,
+        profile.gender,
+        profile.interests if isinstance(
+            profile.interests, str) else profile.interests.count() if profile.interests else 0,
+        profile.relationship_goal,
+        profile.lifestyle
+    ]
+    filled_fields = sum(1 for field in fields if field)
+    profile_completion = int((filled_fields / len(fields)) * 100)
 
     return render(request, 'myapp/edit_profile.html', {
         'edit_form': edit_form,
         'gallery_form': gallery_form,
-        'user_gallery': user_gallery
+        'user_gallery': user_gallery,
+        'profile_completion': profile_completion
     })
 
 
+# ✅ Home with nearby users
 @login_required
 def home(request):
-    users = User.objects.exclude(username=request.user.username)
     viewer_profile = request.user.profile
+    users = User.objects.exclude(id=request.user.id)  # exclude logged-in user
 
     nearby_users = []
+
     for u in users:
         profile = u.profile
-        distance = calculate_distance(
-            viewer_profile.latitude, viewer_profile.longitude,
-            profile.latitude, profile.longitude
-        )
+        if (viewer_profile.latitude is not None and viewer_profile.longitude is not None
+                and profile.latitude is not None and profile.longitude is not None):
+            distance = calculate_distance(
+                viewer_profile.latitude, viewer_profile.longitude,
+                profile.latitude, profile.longitude
+            )
+        else:
+            distance = None  # unknown distance if coordinates are missing
+
         nearby_users.append({
             'user': u,
             'distance': distance,
             'city': profile.city or "Unknown"
         })
-        
+
+    # Sort by distance if available
+    nearby_users.sort(
+        key=lambda x: x['distance'] if x['distance'] is not None else float('inf'))
+
+    # Limit to first 20 users
+    nearby_users = nearby_users[:20]
+
     return render(request, 'myapp/home.html', {"nearby_users": nearby_users})
+
+# ✅ Matched users
+
 
 @login_required
 def matched_users_view(request):
     user = request.user
 
     matched_user_ids = Match.objects.filter(
-        user=user, liked=True).values_list('target', flat=True)
+        user=user, liked=True
+    ).values_list('target', flat=True)
+
     matched_back = Match.objects.filter(
-        user__in=matched_user_ids, target=user, liked=True).values_list('user', flat=True)
+        user__in=matched_user_ids, target=user, liked=True
+    ).values_list('user', flat=True)
 
     mutual_matches = User.objects.filter(id__in=matched_back)
 
     return render(request, 'myapp/matched_users.html', {'matches': mutual_matches})
 
 
+# ✅ Suggested matches (age/distance filter)
 @login_required
 def match_results(request):
     matches = []
@@ -245,7 +375,7 @@ def match_results(request):
         else:
             distance = None
 
-        # Get random image from gallery or fallback to profile_pic
+        # pick random gallery image or fallback
         gallery_images = Gallery.objects.filter(user=profile.user)
         if gallery_images.exists():
             image_url = random.choice(list(gallery_images)).image.url
@@ -265,24 +395,45 @@ def match_results(request):
     return render(request, 'myapp/matches.html', {'matches': matches})
 
 
-# ✅ Helper function (no @login_required)
-def get_potential_matches(user):
-    user_profile = user.profile
-    candidates = Profile.objects.exclude(user=user)
+@login_required
+def get_potential_matches(request):
+    user_profile = request.user.profile
+    candidates = Profile.objects.exclude(user=request.user)
 
     matches = []
     for profile in candidates:
+        # Age difference filter (<=5 years)
         if profile.age and user_profile.age:
             age_diff = abs(profile.age - user_profile.age)
             if age_diff > 5:
                 continue
 
+        # Distance filter (<=100 km)
         if profile.latitude and profile.longitude and user_profile.latitude and user_profile.longitude:
             distance = geodesic(
                 (user_profile.latitude, user_profile.longitude),
                 (profile.latitude, profile.longitude)
             ).km
-            if distance <= 100:
-                matches.append(profile)
+            if distance > 100:
+                continue
+        else:
+            distance = None
 
-    return matches
+        # Random gallery image fallback
+        gallery_images = Gallery.objects.filter(user=profile.user)
+        if gallery_images.exists():
+            image_url = random.choice(list(gallery_images)).image.url
+        elif profile.profile_pic:
+            image_url = profile.profile_pic.url
+        else:
+            image_url = '/static/img/default.jpg'
+
+        matches.append({
+            'username': profile.user.username,
+            'age': profile.age,
+            'city': profile.city,
+            'image': image_url,
+            'distance': round(distance, 1) if distance else "Unknown"
+        })
+
+    return render(request, 'myapp/matches.html', {'matches': matches})

@@ -2,44 +2,112 @@
 {% load static %}
 
 {% block content %}
-  <div id="swipe-container" class="max-w-sm mx-auto mt-10 text-center">
-    {% if profile %}
-      <div id="profile-card" class="bg-white p-6 rounded shadow-md">
-        <img src="{{ profile.avatar.url }}" class="rounded-full w-24 h-24 mx-auto mb-4" alt="{{ profile.user.username }}">
-        <h2 class="text-xl font-bold">{{ profile.user.username }}</h2>
-        <p class="text-sm text-gray-600">{{ profile.bio|default:"No bio" }}</p>
-        <input type="hidden" id="profile-id" value="{{ profile.id }}">
-        <div class="flex justify-center space-x-4 mt-4">
-          <button onclick="sendSwipe('dislike')" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Dislike</button>
-          <button onclick="sendSwipe('like')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Like</button>
-        </div>
+<div id="swipe-container" class="relative w-full max-w-sm mx-auto mt-12 h-[600px]">
+  {% if profile %}
+    <div id="profile-card" class="absolute inset-0 bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300">
+      
+      <!-- Full profile image -->
+      <img src="{{ u.profile.profile_pic.url }}" 
+           class="w-full h-full object-cover" 
+           alt="{{ profile.user.username }}">
+
+      <!-- Gradient overlay with user info -->
+      <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+        <h2 class="text-2xl font-bold">{{ profile.user.username }}</h2>
+        <p class="text-sm mt-1">{{ profile.bio|default:"No bio" }}</p>
       </div>
-    {% else %}
-      <p class="text-center text-gray-500">No more profiles to swipe.</p>
-    {% endif %}
-  </div>
 
-  <script>
-    function sendSwipe(action) {
-      const profileId = document.getElementById('profile-id').value;
+      <!-- Like / Dislike buttons -->
+      <input type="hidden" id="profile-id" value="{{ profile.id }}">
+      <div class="absolute bottom-6 left-0 right-0 flex justify-center space-x-10">
+        <button onclick="sendSwipe('dislike')" 
+                class="bg-red-500 text-white p-5 rounded-full shadow-lg hover:bg-red-600">
+          ❌
+        </button>
+        <button onclick="sendSwipe('like')" 
+                class="bg-green-500 text-white p-5 rounded-full shadow-lg hover:bg-green-600">
+          ❤️
+        </button>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-center text-gray-500">No more profiles to swipe.</p>
+  {% endif %}
+</div>
 
-      fetch("{% url 'swipe_action' %}", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: new URLSearchParams({
-          profile_id: profileId,
-          action: action
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'ok') {
-          location.reload();  // refresh to load next profile
-        }
-      });
+<script>
+  const card = document.getElementById('profile-card');
+  if (card) {
+    let startX, startY, currentX, currentY, isDragging = false;
+
+    card.addEventListener('mousedown', startDrag);
+    card.addEventListener('touchstart', startDrag);
+
+    function startDrag(e) {
+      startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+      startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+      isDragging = true;
+
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('touchmove', onDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchend', endDrag);
     }
-  </script>
+
+    function onDrag(e) {
+      if (!isDragging) return;
+      currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+      currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+
+      let deltaX = currentX - startX;
+      let deltaY = currentY - startY;
+
+      card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${deltaX * 0.1}deg)`;
+    }
+
+    function endDrag(e) {
+      if (!isDragging) return;
+      isDragging = false;
+
+      let deltaX = currentX - startX;
+
+      if (deltaX > 120) {
+        card.style.transform = "translateX(1000px) rotate(30deg)";
+        setTimeout(() => sendSwipe('like'), 300);
+      } else if (deltaX < -120) {
+        card.style.transform = "translateX(-1000px) rotate(-30deg)";
+        setTimeout(() => sendSwipe('dislike'), 300);
+      } else {
+        card.style.transform = "translate(0,0) rotate(0)";
+      }
+
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('touchmove', onDrag);
+      document.removeEventListener('mouseup', endDrag);
+      document.removeEventListener('touchend', endDrag);
+    }
+  }
+
+  function sendSwipe(action) {
+    const profileId = document.getElementById('profile-id').value;
+
+    fetch("{% url 'swipe_action' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: new URLSearchParams({
+        profile_id: profileId,
+        action: action
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        location.reload(); // Load next profile
+      }
+    });
+  }
+</script>
 {% endblock %}

@@ -6,28 +6,59 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.timesince import timesince
+from django.conf import settings
 
 
 class Profile(models.Model):
-    GENDER_CHOICES = [('M', 'Male'), ('F', 'Female'), ('O', 'Other')]
-    WANT_KIDS_CHOICES = [('yes', 'Yes'), ('no', 'No'), ('maybe', 'Maybe')]
-    RELATIONSHIP_GOALS = [('casual', 'Casual'), ('serious', 'Serious'), ('marriage', 'Marriage')]
-    LIFESTYLE_CHOICES = [('active', 'Active'), ('chill', 'Chill'), ('party', 'Party Animal'), ('homebody', 'Homebody')]
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+    WANT_KIDS_CHOICES = [
+        ('yes', 'Yes'),
+        ('no', 'No'),
+        ('maybe', 'Maybe'),
+    ]
+    RELATIONSHIP_GOALS = [
+        ('casual', 'Casual'),
+        ('serious', 'Serious'),
+        ('marriage', 'Marriage'),
+    ]
+    LIFESTYLE_CHOICES = [
+        ('active', 'Active'),
+        ('chill', 'Chill'),
+        ('party', 'Party Animal'),
+        ('homebody', 'Homebody'),
+    ]
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='profile'
+    )
     bio = models.TextField(blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
-    profile_pic = models.ImageField(upload_to='profile_pics/', blank=True, null=True, default='gallery_images/default.jpg')
+    profile_pic = models.ImageField(
+        upload_to='profile_pics/',
+        blank=True,
+        null=True,
+        default='gallery_images/default.jpg'
+    )
     country = CountryField(blank=True, null=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     city = models.CharField(max_length=255, blank=True)
     interests = models.TextField(blank=True)
     hobbies = models.TextField(blank=True)
-    want_kids = models.CharField(max_length=10, choices=WANT_KIDS_CHOICES, blank=True)
-    relationship_goal = models.CharField(max_length=10, choices=RELATIONSHIP_GOALS, blank=True)
-    lifestyle = models.CharField(max_length=10, choices=LIFESTYLE_CHOICES, blank=True)
+    want_kids = models.CharField(
+        max_length=10, choices=WANT_KIDS_CHOICES, blank=True
+    )
+    relationship_goal = models.CharField(
+        max_length=10, choices=RELATIONSHIP_GOALS, blank=True
+    )
+    lifestyle = models.CharField(
+        max_length=10, choices=LIFESTYLE_CHOICES, blank=True
+    )
     is_online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(default=timezone.now)
 
@@ -36,10 +67,12 @@ class Profile(models.Model):
 
     @property
     def age(self):
+        """Calculate age based on date_of_birth"""
         if self.date_of_birth:
             today = date.today()
             return today.year - self.date_of_birth.year - (
-                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+                (today.month, today.day) < (
+                    self.date_of_birth.month, self.date_of_birth.day)
             )
         return None
 
@@ -48,25 +81,38 @@ class Profile(models.Model):
 
 
 class Like(models.Model):
-    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes_sent')
-    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes_received')
-    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="likes_given",
+
+    )
+    liked_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="likes_received"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('from_user', 'to_user')
-
-    def __str__(self):
-        return f"{self.from_user.username} liked {self.to_user.username}"
+        unique_together = ('user', 'liked_user')
 
 
 class Match(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiated_matches')
-    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_matches')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='initiated_matches'
+    )
+    target = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='received_matches'
+    )
     liked = models.BooleanField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'target')
+
+    def __str__(self):
+        return f"{self.user.username} ↔ {self.target.username}"
 
 
 class Gallery(models.Model):
@@ -79,6 +125,7 @@ class Gallery(models.Model):
         return f"{self.user.username}'s gallery image"
 
 
+# Automatically create a profile when a new user is created
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

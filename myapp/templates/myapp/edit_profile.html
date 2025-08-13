@@ -2,66 +2,87 @@
 {% load static %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/eprofile.css' %}">
+<div class="max-w-3xl mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg p-6 transition-colors duration-300 mt-6">
 
-<div class="edit-profile-container">
-  <h2 class="section-title">Edit Your Profile</h2>
+  <!-- Profile Completion -->
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Your Profile</h2>
+    <div class="mt-4">
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+        <div class="bg-pink-500 h-4 rounded-full transition-all duration-500" style="width: {{ profile_completion }}%"></div>
+      </div>
+      <p class="text-sm mt-1 text-gray-600 dark:text-gray-400">
+        Profile Completion: <span class="font-semibold">{{ profile_completion }}%</span>
+      </p>
+    </div>
+  </div>
 
   <!-- Profile Edit Form -->
-  <form method="post" enctype="multipart/form-data" class="profile-form">
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
-    
     {% for field in edit_form %}
-      <div class="form-group">
-        {{ field.label_tag }}
+      <div>
+        <label class="block text-gray-700 dark:text-gray-300 mb-1 font-medium">
+          {{ field.label }}
+        </label>
         {{ field }}
         {% if field.errors %}
-          <div class="form-error">{{ field.errors }}</div>
+          <p class="text-red-500 text-sm mt-1">{{ field.errors|striptags }}</p>
         {% endif %}
       </div>
     {% endfor %}
 
-    <button type="submit" class="btn save-btn">Save Changes</button>
+    <button type="submit" name="edit_profile_submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded transition">
+      Save Changes
+    </button>
   </form>
 
-  <!-- Gallery Buttons -->
-  <div class="gallery-buttons">
-    <button class="btn gallery-btn" onclick="toggleSection('upload-section')">Upload to Gallery</button>
-    <button class="btn gallery-btn" onclick="toggleSection('view-section')">Your Gallery</button>
-  </div>
+  <!-- Gallery Section -->
+  <div class="mt-8">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Gallery</h3>
 
-  <!-- Upload to Gallery Form -->
-  <div id="upload-section" class="gallery-section" style="display: none;">
-    <h4>Upload a New Image</h4>
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ gallery_form.as_p }}
-      <button type="submit" class="btn upload-btn">Upload</button>
-    </form>
-  </div>
+    <div class="flex gap-4">
+      <button class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded transition" onclick="toggleSection('upload-section')">
+        Upload Image
+      </button>
+      <button class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded transition" onclick="toggleSection('view-section')">
+        View Gallery
+      </button>
+    </div>
 
-  <!-- View Gallery -->
-  <div id="view-section" class="gallery-section" style="display: none;">
-    <h4>Your Uploaded Images</h4>
-    <div class="gallery-grid">
-      {% for image in user_gallery %}
-        <div class="gallery-card">
-          <img src="{{ image.image.url }}" alt="Gallery Image" class="gallery-img">
-          {% if image.caption %}
-            <p class="gallery-caption">{{ image.caption }}</p>
-          {% endif %}
-        </div>
-      {% empty %}
-        <p>You haven't uploaded any images yet.</p>
-      {% endfor %}
+    <!-- Upload to Gallery Form -->
+    <div id="upload-section" class="mt-4 hidden">
+      <h4 class="font-semibold mb-2 text-gray-900 dark:text-gray-100">Upload a New Image</h4>
+      <form method="post" enctype="multipart/form-data" class="space-y-2">
+        {% csrf_token %}
+        {{ gallery_form.as_p }}
+        <button type="submit" name="gallery_upload_submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition">Upload</button>
+      </form>
+    </div>
+
+    <!-- View Gallery -->
+    <div id="view-section" class="mt-4 hidden">
+      <h4 class="font-semibold mb-2 text-gray-900 dark:text-gray-100">Your Uploaded Images</h4>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {% for image in user_gallery %}
+          <div class="border rounded-lg overflow-hidden shadow hover:shadow-md transition">
+            <img src="{{ image.image.url }}" alt="Gallery Image" class="w-full h-40 object-cover">
+            {% if image.caption %}
+              <p class="p-2 text-sm text-gray-700 dark:text-gray-300">{{ image.caption }}</p>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p class="text-gray-700 dark:text-gray-300">You haven't uploaded any images yet.</p>
+        {% endfor %}
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   function toggleSection(sectionId) {
-    document.getElementById("upload-section").style.display = (sectionId === "upload-section") ? "block" : "none";
-    document.getElementById("view-section").style.display = (sectionId === "view-section") ? "block" : "none";
+    document.getElementById("upload-section").classList.toggle("hidden", sectionId !== "upload-section");
+    document.getElementById("view-section").classList.toggle("hidden", sectionId !== "view-section");
   }
 </script>
 {% endblock %}

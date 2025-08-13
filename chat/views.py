@@ -3,11 +3,22 @@ from django.contrib.auth.decorators import login_required
 from .models import Message
 from django.contrib.auth.models import User
 from django.db.models import Q, Count
+from django.http import JsonResponse
+
+
+@login_required
+def unread_messages(request):
+    unread_count = Message.objects.filter(
+        receiver=request.user, is_read=False).count()
+    return JsonResponse({"unread_count": unread_count})
+
 
 @login_required
 def chat_list(request):
-    sent = Message.objects.filter(sender=request.user).values_list('receiver', flat=True)
-    received = Message.objects.filter(receiver=request.user).values_list('sender', flat=True)
+    sent = Message.objects.filter(
+        sender=request.user).values_list('receiver', flat=True)
+    received = Message.objects.filter(
+        receiver=request.user).values_list('sender', flat=True)
     user_ids = set(sent).union(set(received))
 
     chat_users = []
@@ -38,9 +49,11 @@ def chat_list(request):
         })
 
     # Sort by timestamp of last message (latest first)
-    chat_users.sort(key=lambda x: x['last_message'].timestamp if x['last_message'] else None, reverse=True)
+    chat_users.sort(
+        key=lambda x: x['last_message'].timestamp if x['last_message'] else None, reverse=True)
 
     return render(request, 'chat/chat_list.html', {'chat_users': chat_users})
+
 
 @login_required
 def chat_room(request, username):
@@ -48,15 +61,15 @@ def chat_room(request, username):
 
     if not hasattr(other_user, 'profile'):
         Profile.objects.create(user=other_user)
-        
+
     messages = Message.objects.filter(
         sender=request.user, receiver=other_user
     ) | Message.objects.filter(
         sender=other_user, receiver=request.user
     )
-    
+
     messages = messages.order_by("timestamp")  # Sorting messages by time
-    
+
     context = {
         "other_user": other_user,
         "is_online": other_user.profile.is_online,
@@ -65,10 +78,13 @@ def chat_room(request, username):
     }
     return render(request, "chat/chat.html", context)
 
+
 def home(request):
     # Get all registered users except the logged-in user
-    users = User.objects.exclude(id=request.user.id)  # Exclude the logged-in user
+    # Exclude the logged-in user
+    users = User.objects.exclude(id=request.user.id)
     return render(request, 'myapp/home.html', {'users': users})
+
 
 def message_detail(request, user_id):
     sender = get_object_or_404(User, id=user_id)

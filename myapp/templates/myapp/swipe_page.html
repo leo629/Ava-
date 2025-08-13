@@ -2,29 +2,29 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="flex justify-center items-center min-h-screen">
-  {% for user in swipe_data %}
-    <div class="relative w-80 h-96 bg-white rounded-2xl shadow-lg overflow-hidden swipe-card mx-auto" data-user-id="{{ user.id }}">
-      <img src="{{ user.image }}" class="w-full h-3/4 object-cover user-image transition duration-300 ease-in-out" alt="User Image">
-      <div class="p-4">
-        <h2 class="text-xl font-bold">{{ user.name }}</h2>
-        <p class="text-sm">{{ user.age }} - {{ user.location }}</p>
-        <div class="flex justify-between mt-4">
-          <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded swipe-dislike">Dislike</button>
-          <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded swipe-like">Like</button>
+<div class="flex justify-center items-center min-h-screen bg-gray-100">
+  <div id="swipe-container" class="relative w-80 h-[32rem]">
+    {% for user in swipe_data %}
+      <div class="absolute inset-0 bg-white rounded-2xl shadow-lg overflow-hidden swipe-card transform transition-all duration-300 ease-in-out" data-user-id="{{ user.id }}">
+        <img src="{{ user.image }}" class="w-full h-3/4 object-cover user-image transition duration-300 ease-in-out" alt="User Image">
+        <div class="p-4">
+          <h2 class="text-xl font-bold">{{ user.name }}</h2>
+          <p class="text-sm text-gray-500">{{ user.age }} - {{ user.location }}</p>
+          <div class="flex justify-between mt-4">
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded swipe-dislike">Dislike</button>
+            <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded swipe-like">Like</button>
+          </div>
         </div>
       </div>
-    </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
 </div>
 
 <script>
-  // Optional: rotate image every 3 seconds
+  // --- Image rotation for gallery ---
   const swipeCards = document.querySelectorAll('.swipe-card');
-
   swipeCards.forEach(card => {
     const userId = card.getAttribute('data-user-id');
-
     fetch(`/get-gallery-images/${userId}/`)
       .then(res => res.json())
       .then(data => {
@@ -38,6 +38,75 @@
         }
       });
   });
+
+  // --- Tinder-style swipe logic ---
+  const container = document.getElementById('swipe-container');
+  let isDragging = false, startX = 0, startY = 0, currentCard = null;
+
+  function attachSwipe(card) {
+    card.addEventListener('mousedown', startDrag);
+    card.addEventListener('touchstart', startDrag, { passive: true });
+  }
+
+  function startDrag(e) {
+    currentCard = e.currentTarget;
+    isDragging = true;
+    startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+    startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('touchend', endDrag);
+  }
+
+  function onDrag(e) {
+    if (!isDragging || !currentCard) return;
+    const x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const y = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    const dx = x - startX;
+    const dy = y - startY;
+    const rotate = dx * 0.05;
+
+    currentCard.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
+  }
+
+  function endDrag(e) {
+    if (!isDragging || !currentCard) return;
+    const x = e.type.includes('mouse') ? e.clientX : e.changedTouches[0].clientX;
+    const dx = x - startX;
+
+    if (Math.abs(dx) > 120) {
+      // Swipe accepted
+      const direction = dx > 0 ? 'right' : 'left';
+      currentCard.style.transition = "transform 0.3s ease-out";
+      currentCard.style.transform = `translate(${dx * 3}px, 100px) rotate(${dx > 0 ? 30 : -30}deg)`;
+      setTimeout(() => {
+        currentCard.remove();
+        showNextCard();
+      }, 300);
+    } else {
+      // Reset position
+      currentCard.style.transition = "transform 0.3s ease-out";
+      currentCard.style.transform = "";
+    }
+
+    isDragging = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('touchend', endDrag);
+  }
+
+  function showNextCard() {
+    const remainingCards = container.querySelectorAll('.swipe-card');
+    if (remainingCards.length === 0) {
+      container.innerHTML = '<p class="text-center text-gray-600">No more profiles</p>';
+    }
+  }
+
+  // Attach swipe events to all cards
+  swipeCards.forEach(card => attachSwipe(card));
 </script>
 
 {% endblock %}

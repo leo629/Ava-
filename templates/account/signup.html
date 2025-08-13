@@ -1,14 +1,12 @@
-
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
 {% block content %}
 <div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
-  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 relative">
     <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Create Your Account</h2>
     
-
-    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+    <form id="signup-form" method="POST" enctype="multipart/form-data" class="space-y-4">
       {% csrf_token %}
       {% crispy form %}
     </form>
@@ -19,4 +17,17 @@
     </p>
   </div>
 </div>
+
+<!-- Loader Overlay -->
+<div id="loader-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-50">
+  <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+</div>
+
+<script>
+  document.getElementById("signup-form").addEventListener("submit", function () {
+    const loader = document.getElementById("loader-overlay");
+    loader.classList.remove("opacity-0", "pointer-events-none");
+    loader.classList.add("opacity-100");
+  });
+</script>
 {% endblock %}

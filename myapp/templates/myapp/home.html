@@ -5,12 +5,13 @@
 
 <div class="max-w-6xl mx-auto px-4 py-8">
   <h1 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-800 dark:text-white">
-    Welcome to Ava Dating 💕
+    Welcome to Ava \
   </h1>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    {% for item in nearby_users %}
-      {% with u=item.user %}
+ <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  {% for item in nearby_users %}
+    {% with u=item.user %}
+      {% if u != request.user %}  {# skip logged-in user #}
       <div class="bg-white dark:bg-gray-900 rounded-xl shadow p-5 text-center transition-transform transform hover:scale-105 hover:shadow-lg">
         <a href="{% url 'profile' username=u.username %}">
           {% if u.profile.profile_pic %}
@@ -33,9 +34,11 @@
           Chat 💬
         </a>
       </div>
-      {% endwith %}
-    {% endfor %}
-  </div>
+      {% endif %}
+    {% endwith %}
+  {% endfor %}
+</div>
+
 </div>
 
 {% endblock %}

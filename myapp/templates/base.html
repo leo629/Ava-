@@ -5,17 +5,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
   <title>{% block title %}Ava Project{% endblock %}</title>
-
   <link rel="icon" type="image/png" href="{% static 'favicon.png' %}" />
-  <meta name="description" content="Ava Project - Find connections that matter." />
-  <meta name="author" content="Aerofold Team" />
-  <meta name="theme-color" content="#111827" />
 
-  <!-- TailwindCSS & Lucide Icons -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Dark Mode Preload -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <!-- Tailwind Config -->
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -23,155 +28,214 @@
         extend: {
           animation: {
             'fade-in': 'fadeIn 0.5s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+            'slide-right': 'slideRight 0.3s ease-out'
           },
           keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            }
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { transform: 'translateY(100%)' }, '100%': { transform: 'translateY(0)' } },
+            slideRight: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } }
           }
         }
       }
     };
   </script>
-  <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="{% static 'css/account.css' %}" />
   {% block extra_head %}{% endblock %}
 </head>
 
 <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 font-sans transition duration-300">
 
-  <!-- Navbar -->
-  <nav class="bg-black text-white py-3 shadow-lg dark:bg-gray-800">
-    <div class="container mx-auto px-4 flex justify-between items-center">
-      <a href="/" class="text-xl font-bold tracking-wide">discover</a>
+<!-- Navbar -->
+<nav class="bg-black text-white shadow-lg dark:bg-gray-800">
+  <div class="container mx-auto px-4 flex justify-between items-center py-3">
 
-      <!-- Hamburger -->
-      <button id="menu-toggle" class="md:hidden focus:outline-none">
-        <i data-lucide="menu" class="w-6 h-6"></i>
-      </button>
+    <!-- Logo -->
+    <a href="/" class="text-xl font-bold tracking-wide flex items-center gap-1">
+      <i data-lucide="flame" class="w-5 h-5 text-pink-500"></i> meet
+    </a>
 
-      <!-- Nav Links -->
-      <ul id="nav-links" class="hidden md:flex flex-col md:flex-row md:items-center gap-4 text-sm mt-4 md:mt-0">
-        {% if user.is_authenticated %}
-          <li><a href="{% url 'user_profile' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="user" class="w-4 h-4"></i>Profile</a></li>
-          <li><a href="{% url 'edit_profile' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="edit" class="w-4 h-4"></i>Edit</a></li>
-          <li><a href="{% url 'account_logout' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="log-out" class="w-4 h-4"></i>Logout</a></li>
-          <li><a href="{% url 'chat_list' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i>Chat</a></li>
-          <li><a href="{% url 'swipe_page' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="heart" class="w-4 h-4"></i>Swipe</a></li>
-          <li><a href="{% url 'who_liked_me' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="thumbs-up" class="w-4 h-4"></i>Likes</a></li>
-          <li><a href="{% url 'match_results' %}" class="hover:text-gray-400 flex items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i>Matches</a></li>
+    <!-- Desktop Nav -->
+    <ul class="hidden md:flex gap-6 text-sm items-center">
+      {% if user.is_authenticated %}
+        <li><a href="{% url 'user_profile' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="user" class="w-5 h-5"></i>Profile</a></li>
+        <li><a href="{% url 'edit_profile' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="edit" class="w-5 h-5"></i>Edit</a></li>
+        <li><a href="{% url 'chat_list' %}" class="flex items-center gap-1 hover:text-pink-500 relative"><i data-lucide="message-circle" class="w-5 h-5"></i>Chat<span id="chat-notification-count" class="absolute -top-2 -right-3 bg-red-500 text-xs px-1 rounded-full hidden">0</span></a></li>
+        <li><a href="{% url 'swipe_page' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="heart" class="w-5 h-5"></i>Swipe</a></li>
+        <li><a href="{% url 'who_liked_me' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="thumbs-up" class="w-5 h-5"></i>Likes</a></li>
+        <li><a href="{% url 'match_results' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="users" class="w-5 h-5"></i>Matches</a></li>
+        <li id="notification-wrapper" class="relative cursor-pointer"><i data-lucide="bell" class="w-5 h-5 hover:text-pink-500"></i><span id="notification-count" class="absolute -top-2 -right-2 bg-red-500 text-xs px-1 rounded-full hidden">0</span><div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-gray-700 shadow-lg rounded-lg overflow-hidden z-50"></div></li>
+        <li><a href="{% url 'account_logout' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="log-out" class="w-5 h-5"></i>Logout</a></li>
+      {% else %}
+        <li><a href="{% url 'account_login' %}" class="hover:text-pink-500">Login</a></li>
+        <li><a href="{% url 'account_signup' %}" class="hover:text-pink-500">Sign Up</a></li>
+      {% endif %}
+      <li><button id="darkModeToggle" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition"><i data-lucide="moon" class="w-5 h-5 text-yellow-300"></i></button></li>
+    </ul>
 
-          <!-- Notifications -->
-          <li class="relative">
-            <div id="notification-wrapper" class="cursor-pointer relative">
-              <i data-lucide="bell" class="w-5 h-5"></i>
-              <span id="notification-count" class="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full px-1 hidden">0</span>
-              <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white text-black rounded shadow-lg z-50 max-h-64 overflow-y-auto dark:bg-gray-800 dark:text-white">
-                <p class="text-sm p-3 text-center">Loading notifications...</p>
-              </div>
-            </div>
-          </li>
-        {% else %}
-          <li><a href="{% url 'account_login' %}" class="hover:text-gray-400">Login</a></li>
-          <li><a href="{% url 'account_signup' %}" class="hover:text-gray-400">Sign Up</a></li>
-        {% endif %}
+    <!-- Mobile Top Icons -->
+    <div class="flex md:hidden items-center gap-3 text-gray-200">
+      {% if user.is_authenticated %}
+        <a href="{% url 'chat_list' %}" class="relative p-1"><i data-lucide="message-circle" class="w-5 h-5"></i><span id="chat-notification-count-mobile" class="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full hidden">0</span></a>
+        <button id="notification-wrapper-mobile" class="relative p-1"><i data-lucide="bell" class="w-5 h-5"></i><span id="notification-count-mobile" class="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full hidden">0</span></button>
+        <a href="{% url 'user_profile' %}" class="p-1"><i data-lucide="user" class="w-5 h-5"></i></a>
+        <button id="mobileMenuToggle" class="p-1"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        <a href="{% url 'account_logout' %}" class="p-1"><i data-lucide="log-out" class="w-5 h-5"></i></a>
+      {% else %}
+        <a href="{% url 'account_login' %}" class="p-1"><i data-lucide="log-in" class="w-5 h-5"></i></a>
+        <a href="{% url 'account_signup' %}" class="p-1"><i data-lucide="user-plus" class="w-5 h-5"></i></a>
+      {% endif %}
+      <button id="darkModeToggleMobile" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition"><i data-lucide="moon" class="w-5 h-5 text-yellow-300"></i></button>
+    </div>
+  </div>
 
-        <!-- Dark Mode Toggle -->
-        <li>
-          <button id="darkModeToggle" class="ml-2 bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 transition text-sm">
-            🌙
-          </button>
-        </li>
+  <!-- Mobile Slide Menu -->
+  <div id="mobile-slide-menu" class="fixed top-0 right-0 h-full w-64 bg-black dark:bg-gray-800 transform translate-x-full transition-transform duration-300 z-50 p-6">
+    <button id="closeMobileMenu" class="mb-4 text-gray-300"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <ul class="flex flex-col gap-4 text-gray-200">
+      <li><a href="{% url 'swipe_page' %}" class="hover:text-pink-500 flex items-center gap-2"><i data-lucide="heart" class="w-5 h-5"></i>Swipe</a></li>
+      <li><a href="{% url 'who_liked_me' %}" class="hover:text-pink-500 flex items-center gap-2"><i data-lucide="thumbs-up" class="w-5 h-5"></i>Likes</a></li>
+      <li><a href="{% url 'match_results' %}" class="hover:text-pink-500 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5"></i>Matches</a></li>
+      <li><a href="{% url 'terms' %}" class="hover:text-pink-500">Terms & Conditions</a></li>
+      <li><a href="{% url 'privacy' %}" class="hover:text-pink-500">Privacy Policy</a></li>
+      <li><a href="{% url 'about' %}" class="hover:text-pink-500">About Us</a></li>
+      <li><a href="{% url 'contact' %}" class="hover:text-pink-500">Contact</a></li>
+    </ul>
+  </div>
+
+  <!-- Mobile Notification Modal -->
+  <div id="mobile-notification-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
+    <div class="w-full bg-white dark:bg-gray-800 rounded-t-lg p-4 animate-slide-up max-h-[60vh] overflow-y-auto">
+      <h2 class="text-lg font-bold mb-3">Notifications</h2>
+      <div id="mobile-notification-list" class="space-y-2"></div>
+      <button id="close-mobile-notifications" class="mt-4 w-full bg-red-500 text-white py-2 rounded">Close</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container mx-auto mt-6 px-4 animate-fade-in">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+{% block footer %}
+<footer class="bg-black dark:bg-gray-800 text-gray-300 mt-10">
+  <div class="container mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <div>
+      <a href="/" class="flex items-center gap-2 text-white font-bold text-lg">
+        <i data-lucide="flame" class="w-5 h-5 text-pink-500"></i> Aerofold
+      </a>
+      <p class="text-sm mt-2 text-gray-400">Connecting people with style.</p>
+    </div>
+
+    <div>
+      <h3 class="text-white font-semibold mb-2">Quick Links</h3>
+      <ul class="space-y-1 text-sm">
+        <li><a href="{% url 'terms' %}" class="hover:text-pink-500">Terms & Conditions</a></li>
+        <li><a href="{% url 'privacy' %}" class="hover:text-pink-500">Privacy Policy</a></li>
+        <li><a href="/about/" class="hover:text-pink-500">About Us</a></li>
+        <li><a href="/contact/" class="hover:text-pink-500">Contact</a></li>
       </ul>
     </div>
-  </nav>
 
-  <!-- Page Content -->
-  <main class="container mx-auto mt-6 px-4 animate-fade-in">
-    {% block content %}{% endblock %}
-  </main>
+    <div>
+      <h3 class="text-white font-semibold mb-2">Follow Us</h3>
+      <div class="flex gap-4">
+        <a href="#" class="hover:text-pink-500"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+        <a href="#" class="hover:text-pink-500"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+        <a href="#" class="hover:text-pink-500"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+        <a href="#" class="hover:text-pink-500"><i data-lucide="linkedin" class="w-5 h-5"></i></a>
+      </div>
+    </div>
+  </div>
 
-  <!-- Scripts -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      lucide.createIcons();
+  <div class="border-t border-gray-700 mt-6 py-4 text-center text-sm text-gray-400">
+    © 2025 <span class="font-semibold text-white">Aerofold</span>. All rights reserved.
+  </div>
+</footer>
+{% endblock footer %}
 
-      // Mobile nav toggle
-      const toggle = document.getElementById("menu-toggle");
-      const nav = document.getElementById("nav-links");
-      toggle.addEventListener("click", () => {
-        nav.classList.toggle("hidden");
-      });
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  lucide.createIcons();
 
-      // Dark Mode
-      const toggleButton = document.getElementById('darkModeToggle');
-      const htmlElement = document.documentElement;
-      const iconMap = { dark: "☀️", light: "🌙" };
-      toggleButton.textContent = iconMap[localStorage.getItem('theme') || 'light'];
+  const htmlElement = document.documentElement;
+  const toggleButtons = [document.getElementById('darkModeToggle'), document.getElementById('darkModeToggleMobile')];
 
-      toggleButton.addEventListener('click', () => {
-        const isDark = htmlElement.classList.toggle('dark');
-        const theme = isDark ? 'dark' : 'light';
-        localStorage.setItem('theme', theme);
-        toggleButton.textContent = iconMap[theme];
-      });
-
-      // Notifications
-      const bell = document.getElementById("notification-wrapper");
-      const dropdown = document.getElementById("notification-dropdown");
-      const badge = document.getElementById("notification-count");
-
-      if (bell) {
-        bell.addEventListener("click", () => {
-          dropdown.classList.toggle("hidden");
-          badge.classList.add("hidden");
-        });
-
-        function fetchNotifications() {
-          fetch("/notifications/fetch/")
-            .then(res => res.json())
-            .then(data => {
-              const count = data.unread_count;
-              badge.textContent = count;
-              count > 0 ? badge.classList.remove("hidden") : badge.classList.add("hidden");
-
-              dropdown.innerHTML = data.notifications.map(n => `
-                <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                  <p class="text-sm">${n.message}</p>
-                  <p class="text-xs text-gray-500">${new Date(n.timestamp).toLocaleString()}</p>
-                </div>
-              `).join("") || `<p class="text-sm p-3 text-center">No notifications</p>`;
-            })
-            .catch(() => {
-              dropdown.innerHTML = `<p class="text-sm p-3 text-center text-red-500">Error loading notifications</p>`;
-            });
-        }
-
-        fetchNotifications();
-        setInterval(fetchNotifications, 10000);
-      }
-
-      // Location Update
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          fetch("/update_location/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            })
-          });
-        });
-      }
+  function setTheme(theme) {
+    htmlElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('theme', theme);
+    toggleButtons.forEach(btn => {
+      btn.innerHTML = theme === 'dark'
+        ? '<i data-lucide="sun" class="w-5 h-5 text-yellow-300"></i>'
+        : '<i data-lucide="moon" class="w-5 h-5 text-yellow-300"></i>';
     });
-  </script>
-  {% block scripts %}{% endblock %}
+    lucide.createIcons();
+  }
+
+  setTheme(localStorage.getItem('theme') || 'light');
+  toggleButtons.forEach(btn => btn?.addEventListener('click', () => {
+    setTheme(htmlElement.classList.contains('dark') ? 'light' : 'dark');
+  }));
+
+  // Notifications
+  function fetchNotifications() {
+    fetch("/notifications/fetch/")
+      .then(res => res.json())
+      .then(data => {
+        const badge = document.getElementById("notification-count");
+        const dropdown = document.getElementById("notification-dropdown");
+        badge.textContent = data.unread_count;
+        badge.classList.toggle("hidden", data.unread_count === 0);
+        dropdown.innerHTML = data.notifications.length
+          ? data.notifications.map(n => `<div class="px-4 py-2 border-b dark:border-gray-700"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-500">${new Date(n.timestamp).toLocaleString()}</p></div>`).join("")
+          : `<p class="text-sm p-3 text-center">No notifications</p>`;
+
+        const mobileBadge = document.getElementById("notification-count-mobile");
+        const mobileList = document.getElementById("mobile-notification-list");
+        mobileBadge.textContent = data.unread_count;
+        mobileBadge.classList.toggle("hidden", data.unread_count === 0);
+        mobileList.innerHTML = dropdown.innerHTML;
+      });
+
+    fetch("/chat/unread/")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("chat-notification-count").textContent = data.unread || 0;
+        document.getElementById("chat-notification-count").classList.toggle("hidden", data.unread === 0);
+        document.getElementById("chat-notification-count-mobile").textContent = data.unread || 0;
+        document.getElementById("chat-notification-count-mobile").classList.toggle("hidden", data.unread === 0);
+      });
+  }
+
+  document.getElementById("notification-wrapper")?.addEventListener("click", () => {
+    document.getElementById("notification-dropdown").classList.toggle("hidden");
+  });
+  document.getElementById("notification-wrapper-mobile")?.addEventListener("click", () => {
+    document.getElementById("mobile-notification-modal").classList.remove("hidden");
+  });
+  document.getElementById("close-mobile-notifications")?.addEventListener("click", () => {
+    document.getElementById("mobile-notification-modal").classList.add("hidden");
+  });
+
+  // Mobile Slide Menu
+  const mobileMenu = document.getElementById("mobile-slide-menu");
+  document.getElementById("mobileMenuToggle")?.addEventListener("click", () => {
+    mobileMenu.classList.remove("translate-x-full");
+  });
+  document.getElementById("closeMobileMenu")?.addEventListener("click", () => {
+    mobileMenu.classList.add("translate-x-full");
+  });
+
+  fetchNotifications();
+  setInterval(fetchNotifications, 10000);
+});
+</script>
+
+{% block scripts %}{% endblock %}
 </body>
 </html>
-

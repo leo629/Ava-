@@ -12,9 +12,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'ava-nvqb.onrender.com',  
+    'ava-nvqb.onrender.com',
 ]
-
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -39,7 +38,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    
+
     "crispy_tailwind",
     "crispy_forms",
     "formtools",
@@ -77,15 +76,15 @@ ACCOUNT_FORMS = {
     'signup': 'myapp.forms.CustomSignupForm',
 }
 
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = '/home/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-             "hosts": [os.getenv("REDIS_URL", "redis://localhost:6379")],
+            "hosts": [os.getenv("REDIS_URL", "redis://localhost:6379")],
         },
     },
 }
@@ -172,4 +171,3 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-

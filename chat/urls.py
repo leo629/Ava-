@@ -6,4 +6,5 @@ urlpatterns = [
     path("chat/<str:username>/", chat_room, name="chat_room"),
     path('', home, name='home'),
     path('messages/', chat_list, name='chat_list'),
+    path("unread/", views.unread_messages, name="unread_messages"),
 ]

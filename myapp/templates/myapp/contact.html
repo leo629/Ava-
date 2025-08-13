@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto text-center py-10">
+    <h1 class="text-3xl font-bold mb-4">Contact Us</h1>
+    <p class="text-gray-700 leading-relaxed text-justify">
+        We would love to hear from you! Whether you have questions, feedback, 
+        partnership ideas, or need support, our team is here to help. 
+        Your thoughts and experiences matter to us because they guide us in 
+        making this platform better for everyone. 
+    </p>
+
+    <p class="text-gray-700 leading-relaxed text-justify mt-4">
+        Since our dating app was created by <strong>Aerofold</strong>, we are 
+        committed to constantly improving and delivering a platform that feels 
+        safe, engaging, and fun. Every message we receive is carefully read, 
+        and we do our best to respond as quickly as possible. 
+        Whether you’re a free member exploring our features or waiting to unlock 
+        upcoming premium tools, your voice helps us shape the future of this 
+        community.
+    </p>
+
+    <!-- Contact Form -->
+    <form action="" method="post" class="mt-6 space-y-4 text-left">
+        {% csrf_token %}
+        <div>
+            <label class="block mb-1 font-medium">Your Name</label>
+            <input type="text" name="name" class="w-full border rounded-lg p-2" required>
+        </div>
+        <div>
+            <label class="block mb-1 font-medium">Your Email</label>
+            <input type="email" name="email" class="w-full border rounded-lg p-2" required>
+        </div>
+        <div>
+            <label class="block mb-1 font-medium">Message</label>
+            <textarea name="message" rows="5" class="w-full border rounded-lg p-2" required></textarea>
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            Send Message
+        </button>
+    </form>
+</div>
+{% endblock %}
