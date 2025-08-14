@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
 
-    "crisptay_tailwind",
+    "crispy_tailwind",
     "crispy_forms",
     "formtools",
     "channels",
