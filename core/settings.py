@@ -148,6 +148,7 @@ USE_I18N = True
 USE_TZ = True
 DEFAULT_CHARSET = 'utf-8'
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Email config
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

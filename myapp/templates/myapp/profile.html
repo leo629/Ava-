@@ -20,49 +20,92 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ profile_user.email }}</p>
         {% endif %}
         
-        <div class="mt-4">
-  <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">
-    Profile Completion: {{ profile_completion }}%
-  </h3>
-  <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700 mt-2">
-    <div class="bg-green-500 h-3 rounded-full transition-all duration-500"
-         style="width: {{ profile_completion }}%"></div>
+        <!-- Profile Completion -->
+        <div class="mt-4 w-full">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Profile Completion: {{ profile_completion }}%
+          </h3>
+          <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700 mt-2">
+            <div class="bg-green-500 h-3 rounded-full transition-all duration-500"
+                 style="width: {{ profile_completion }}%"></div>
+          </div>
+        </div>
+    </div>
+<!-- Gallery Section -->
+<div class="mt-8">
+  <h2 class="text-2xl font-semibold mb-4">Gallery</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    {% for image in gallery_images %}
+      <div class="relative group cursor-pointer" onclick="openLightbox({{ forloop.counter0 }})">
+        <img src="{{ image.image.url }}" alt="Gallery Image"
+             class="w-full h-40 object-cover rounded-xl shadow-md transform group-hover:scale-105 transition">
+        {% if image.caption %}
+          <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ image.caption }}</p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-gray-500 mt-2">This user has not uploaded any images yet.</p>
+    {% endfor %}
   </div>
 </div>
 
+<!-- Lightbox Modal -->
+<div id="lightbox" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+  <!-- Close -->
+  <span class="absolute top-5 right-8 text-white text-3xl cursor-pointer" onclick="closeLightbox()">&times;</span>
 
-        <form method="post" action="{% url 'like_profile' profile_user.id %}">
-      {% csrf_token %}
-      <button type="submit" class="mt-3 focus:outline-none">
-        {% if liked %}
-          <i class="fas fa-heart text-3xl text-red-500"></i>
-        {% else %}
-          <i class="far fa-heart text-3xl text-gray-500"></i>
-        {% endif %}
-      </button>
-    </form>
-    <p class="text-gray-500 text-sm mt-1">{{ like_count }} Likes</p>
-  </div>
+  <!-- Prev -->
+  <span class="absolute left-5 text-white text-4xl cursor-pointer select-none" onclick="changeImage(-1)">&#10094;</span>
 
-    <!-- Gallery Section -->
-    {% if gallery %}
-    <div class="mt-6">
-        <h2 class="text-xl font-semibold mb-3">Gallery</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {% for image in gallery %}
-                <img src="{{ image.image.url }}" class="w-full h-40 object-cover rounded-xl shadow-md hover:scale-105 transition">
-            {% empty %}
-                <p class="text-gray-500">No images uploaded yet.</p>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+  <!-- Next -->
+  <span class="absolute right-5 text-white text-4xl cursor-pointer select-none" onclick="changeImage(1)">&#10095;</span>
+
+  <!-- Image -->
+  <img id="lightbox-img" src="" class="max-h-[90%] max-w-[90%] rounded-lg shadow-lg transition-all duration-300">
+</div>
+
+<script>
+  // Store image URLs in JS array
+  const galleryImages = [
+    {% for image in gallery_images %}
+      "{{ image.image.url }}"{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  let currentIndex = 0;
+
+  function openLightbox(index) {
+    currentIndex = index;
+    document.getElementById("lightbox-img").src = galleryImages[currentIndex];
+    document.getElementById("lightbox").classList.remove("hidden");
+  }
+
+  function closeLightbox() {
+    document.getElementById("lightbox").classList.add("hidden");
+  }
+
+  function changeImage(step) {
+    currentIndex = (currentIndex + step + galleryImages.length) % galleryImages.length;
+    document.getElementById("lightbox-img").src = galleryImages[currentIndex];
+  }
+
+  // Close with ESC key
+  document.addEventListener("keydown", function(e) {
+    if (!document.getElementById("lightbox").classList.contains("hidden")) {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowRight") changeImage(1);
+      if (e.key === "ArrowLeft") changeImage(-1);
+    }
+  });
+</script>
+
+
 
     <!-- Profile Details -->
     <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
         
         {% if profile.bio %}
-        <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow col-span-2">
             <p class="text-sm text-gray-500">Bio</p>
             <p class="font-medium">{{ profile.bio }}</p>
         </div>

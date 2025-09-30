@@ -1,17 +1,48 @@
 {% extends "base.html" %}
-{% block content %}
-<h2 class="text-xl font-bold mb-4">People Who Liked You</h2>
 
-{% if likes %}
-  <ul class="space-y-4">
-    {% for match in likes %}
-      <li class="bg-white dark:bg-gray-800 shadow p-4 rounded">
-        <p><strong>{{ match.user.username }}</strong> liked you.</p>
-        <a href="{% url 'like_back' match.user.id %}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Like Back</a>
-      </li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>No one has liked you yet 😢</p>
-{% endif %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+    People Who Liked You
+  </h2>
+
+  {% if likes %}
+    <ul class="space-y-4">
+      {% for match in likes %}
+        <li class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-4 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            {% if match.profile_pic %}
+              <img src="{{ match.profile_pic.url }}" alt="{{ match.user.username }}'s picture"
+                   class="w-12 h-12 rounded-full object-cover border border-gray-300 dark:border-gray-600">
+            {% else %}
+              <div class="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                <span class="text-sm font-medium">
+                  {{ match.user.username|first|upper }}
+                </span>
+              </div>
+            {% endif %}
+            <div>
+              <p class="text-gray-900 dark:text-gray-100 font-semibold">
+                {{ match.user.username }}
+              </p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                liked you 💖
+              </p>
+            </div>
+          </div>
+
+          <a href="{% url 'like_back' match.user.id %}"
+             class="bg-blue-500 text-white text-sm px-4 py-2 rounded-xl hover:bg-blue-600 transition">
+            Like Back
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-center mt-8 text-gray-600 dark:text-gray-300">
+      <p class="text-lg">No one has liked you yet 😢</p>
+      <p class="text-sm mt-2">Keep swiping — your match might be just around the corner!</p>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

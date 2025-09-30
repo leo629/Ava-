@@ -164,65 +164,122 @@ document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
 
   const htmlElement = document.documentElement;
-  const toggleButtons = [document.getElementById('darkModeToggle'), document.getElementById('darkModeToggleMobile')];
+  const toggleButtons = [
+    document.getElementById('darkModeToggle'),
+    document.getElementById('darkModeToggleMobile')
+  ];
 
+  // --- THEME TOGGLE ---
   function setTheme(theme) {
     htmlElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
+
     toggleButtons.forEach(btn => {
+      if (!btn) return;
       btn.innerHTML = theme === 'dark'
         ? '<i data-lucide="sun" class="w-5 h-5 text-yellow-300"></i>'
         : '<i data-lucide="moon" class="w-5 h-5 text-yellow-300"></i>';
     });
+
     lucide.createIcons();
   }
 
   setTheme(localStorage.getItem('theme') || 'light');
-  toggleButtons.forEach(btn => btn?.addEventListener('click', () => {
-    setTheme(htmlElement.classList.contains('dark') ? 'light' : 'dark');
-  }));
+  toggleButtons.forEach(btn =>
+    btn?.addEventListener('click', () => {
+      setTheme(htmlElement.classList.contains('dark') ? 'light' : 'dark');
+    })
+  );
 
-  // Notifications
+  // --- NOTIFICATIONS ---
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function markNotificationsRead() {
+    fetch("/notifications/mark-read/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "Content-Type": "application/json"
+      }
+    }).then(() => {
+      document.getElementById("notification-count")?.classList.add("hidden");
+      document.getElementById("notification-count-mobile")?.classList.add("hidden");
+    });
+  }
+
   function fetchNotifications() {
-    fetch("/notifications/fetch/")
+    fetch("/notifications/fetch/", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         const badge = document.getElementById("notification-count");
         const dropdown = document.getElementById("notification-dropdown");
+
         badge.textContent = data.unread_count;
         badge.classList.toggle("hidden", data.unread_count === 0);
         dropdown.innerHTML = data.notifications.length
-          ? data.notifications.map(n => `<div class="px-4 py-2 border-b dark:border-gray-700"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-500">${new Date(n.timestamp).toLocaleString()}</p></div>`).join("")
+          ? data.notifications.map(n =>
+              `<div class="px-4 py-2 border-b dark:border-gray-700">
+                 <p class="text-sm">${n.message}</p>
+                 <p class="text-xs text-gray-500">${new Date(n.timestamp).toLocaleString()}</p>
+               </div>`
+            ).join("")
           : `<p class="text-sm p-3 text-center">No notifications</p>`;
 
         const mobileBadge = document.getElementById("notification-count-mobile");
         const mobileList = document.getElementById("mobile-notification-list");
+
         mobileBadge.textContent = data.unread_count;
         mobileBadge.classList.toggle("hidden", data.unread_count === 0);
         mobileList.innerHTML = dropdown.innerHTML;
       });
 
-    fetch("/chat/unread/")
+    fetch("/chat/unread/", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
-        document.getElementById("chat-notification-count").textContent = data.unread || 0;
-        document.getElementById("chat-notification-count").classList.toggle("hidden", data.unread === 0);
-        document.getElementById("chat-notification-count-mobile").textContent = data.unread || 0;
-        document.getElementById("chat-notification-count-mobile").classList.toggle("hidden", data.unread === 0);
+        const unread = data.unread || 0;
+        const chatCount = document.getElementById("chat-notification-count");
+        const chatCountMobile = document.getElementById("chat-notification-count-mobile");
+
+        chatCount.textContent = unread;
+        chatCount.classList.toggle("hidden", unread === 0);
+
+        chatCountMobile.textContent = unread;
+        chatCountMobile.classList.toggle("hidden", unread === 0);
       });
   }
 
+  // Desktop dropdown
   document.getElementById("notification-wrapper")?.addEventListener("click", () => {
-    document.getElementById("notification-dropdown").classList.toggle("hidden");
+    const dropdown = document.getElementById("notification-dropdown");
+    dropdown.classList.toggle("hidden");
+    if (!dropdown.classList.contains("hidden")) {
+      markNotificationsRead();
+    }
   });
+
+  // Mobile modal
   document.getElementById("notification-wrapper-mobile")?.addEventListener("click", () => {
     document.getElementById("mobile-notification-modal").classList.remove("hidden");
+    markNotificationsRead();
   });
   document.getElementById("close-mobile-notifications")?.addEventListener("click", () => {
     document.getElementById("mobile-notification-modal").classList.add("hidden");
   });
 
-  // Mobile Slide Menu
+  // --- MOBILE SLIDE MENU ---
   const mobileMenu = document.getElementById("mobile-slide-menu");
   document.getElementById("mobileMenuToggle")?.addEventListener("click", () => {
     mobileMenu.classList.remove("translate-x-full");
@@ -231,10 +288,12 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenu.classList.add("translate-x-full");
   });
 
+  // Initial + interval fetch
   fetchNotifications();
-  setInterval(fetchNotifications, 10000);
+  setInterval(fetchNotifications, 100000);
 });
 </script>
+
 
 {% block scripts %}{% endblock %}
 </body>

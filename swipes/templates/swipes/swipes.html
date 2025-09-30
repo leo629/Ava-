@@ -2,50 +2,54 @@
 {% load static %}
 
 {% block content %}
-<div id="swipe-container" class="relative w-full max-w-sm mx-auto mt-12 h-[600px]">
+<div id="swipe-container" class="relative w-full max-w-md mx-auto h-[100vh] overflow-hidden bg-black">
   {% if profile %}
-    <div id="profile-card" class="absolute inset-0 bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300">
-      
-      <!-- Full profile image -->
-      <img src="{{ u.profile.profile_pic.url }}" 
-           class="w-full h-full object-cover" 
+    <div id="profile-card" 
+         class="absolute inset-0 bg-black shadow-xl overflow-hidden transform transition-all duration-300 rounded-2xl">
+
+      <!-- Profile Image -->
+      <img id="profile-image" 
+           src="{% if profile.profile_pic %}{{ profile.profile_pic.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" 
+           class="w-full h-full object-cover transition-opacity duration-1000 opacity-100"
            alt="{{ profile.user.username }}">
 
-      <!-- Gradient overlay with user info -->
+      <!-- Overlay info -->
       <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
-        <h2 class="text-2xl font-bold">{{ profile.user.username }}</h2>
-        <p class="text-sm mt-1">{{ profile.bio|default:"No bio" }}</p>
+        <h2 id="profile-username" class="text-3xl font-bold">{{ profile.user.username }}</h2>
+        <p id="profile-bio" class="text-base mt-1">{{ profile.bio|default:"No bio" }}</p>
       </div>
 
-      <!-- Like / Dislike buttons -->
+      <!-- Hidden inputs -->
       <input type="hidden" id="profile-id" value="{{ profile.id }}">
-      <div class="absolute bottom-6 left-0 right-0 flex justify-center space-x-10">
+      
+      <!-- Like / Dislike buttons -->
+      <div class="absolute bottom-20 left-0 right-0 flex justify-center space-x-12">
         <button onclick="sendSwipe('dislike')" 
-                class="bg-red-500 text-white p-5 rounded-full shadow-lg hover:bg-red-600">
+                class="bg-red-500 text-white p-6 rounded-full shadow-lg hover:bg-red-600 text-2xl">
           ❌
         </button>
         <button onclick="sendSwipe('like')" 
-                class="bg-green-500 text-white p-5 rounded-full shadow-lg hover:bg-green-600">
+                class="bg-green-500 text-white p-6 rounded-full shadow-lg hover:bg-green-600 text-2xl">
           ❤️
         </button>
       </div>
     </div>
   {% else %}
-    <p class="text-center text-gray-500">No more profiles to swipe.</p>
+    <p id="no-profiles" class="text-center text-gray-500 mt-20">No more profiles to swipe.</p>
   {% endif %}
 </div>
 
 <script>
-  const card = document.getElementById('profile-card');
+  // Swipe card drag functionality
+  let card = document.getElementById('profile-card');
   if (card) {
-    let startX, startY, currentX, currentY, isDragging = false;
+    let startX, currentX, isDragging = false;
 
     card.addEventListener('mousedown', startDrag);
     card.addEventListener('touchstart', startDrag);
 
     function startDrag(e) {
       startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-      startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
       isDragging = true;
 
       document.addEventListener('mousemove', onDrag);
@@ -57,18 +61,13 @@
     function onDrag(e) {
       if (!isDragging) return;
       currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-      currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-
       let deltaX = currentX - startX;
-      let deltaY = currentY - startY;
-
-      card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${deltaX * 0.1}deg)`;
+      card.style.transform = `translate(${deltaX}px, 0) rotate(${deltaX * 0.1}deg)`;
     }
 
-    function endDrag(e) {
+    function endDrag() {
       if (!isDragging) return;
       isDragging = false;
-
       let deltaX = currentX - startX;
 
       if (deltaX > 120) {
@@ -88,6 +87,7 @@
     }
   }
 
+  // Handle swipes via AJAX (no reload)
   function sendSwipe(action) {
     const profileId = document.getElementById('profile-id').value;
 
@@ -104,10 +104,59 @@
     })
     .then(res => res.json())
     .then(data => {
-      if (data.status === 'ok') {
-        location.reload(); // Load next profile
+      if (data.next_profile) {
+        loadNextProfile(data.next_profile);
+      } else {
+        document.getElementById('swipe-container').innerHTML =
+          '<p class="text-center text-gray-500 mt-20">No more profiles to swipe.</p>';
       }
     });
   }
+
+  let galleryInterval;
+
+  // Replace profile card with next one
+  function loadNextProfile(p) {
+    const card = document.getElementById('profile-card');
+    if (!card) return;
+
+    document.getElementById('profile-id').value = p.id;
+    document.getElementById('profile-image').src = p.images[0] || "/static/images/default_profile.jpg";
+    document.getElementById('profile-username').innerText = p.username;
+    document.getElementById('profile-bio').innerText = p.bio || "No bio";
+
+    // Reset swipe animation
+    card.style.transform = "translate(0,0) rotate(0)";
+
+    // Reset gallery rotation
+    if (galleryInterval) clearInterval(galleryInterval);
+    if (p.images && p.images.length > 1) {
+      let index = 0;
+      const profileImg = document.getElementById('profile-image');
+      galleryInterval = setInterval(() => {
+        profileImg.style.opacity = 0;
+        setTimeout(() => {
+          index = (index + 1) % p.images.length;
+          profileImg.src = p.images[index];
+          profileImg.style.opacity = 1;
+        }, 400);
+      }, 4000);
+    }
+  }
+
+  // Initial gallery rotation (first profile)
+  {% if profile %}
+    loadNextProfile({
+      id: {{ profile.id }},
+      username: "{{ profile.user.username }}",
+      bio: "{{ profile.bio|default:'No bio' }}",
+      images: [
+        {% if profile.profile_pic %}"{{ profile.profile_pic.url }}",{% endif %}
+        {% for img in profile.user.gallery_set.all %}
+          "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
+    });
+  {% endif %}
 </script>
 {% endblock %}

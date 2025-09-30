@@ -4,6 +4,10 @@ from .models import Message
 from django.contrib.auth.models import User
 from django.db.models import Q, Count
 from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from notifications.views import send_notification
 
 
 @login_required
@@ -58,25 +62,36 @@ def chat_list(request):
 @login_required
 def chat_room(request, username):
     other_user = get_object_or_404(User, username=username)
-
     if not hasattr(other_user, 'profile'):
+        from profiles.models import Profile
         Profile.objects.create(user=other_user)
-
     messages = Message.objects.filter(
-        sender=request.user, receiver=other_user
-    ) | Message.objects.filter(
-        sender=other_user, receiver=request.user
-    )
-
-    messages = messages.order_by("timestamp")  # Sorting messages by time
-
-    context = {
-        "other_user": other_user,
-        "is_online": other_user.profile.is_online,
-        "last_seen": other_user.profile.last_seen,
-        "messages": messages,
-    }
-    return render(request, "chat/chat.html", context)
+        Q(sender=request.user, receiver=other_user) | Q(
+            sender=other_user, receiver=request.user)
+    ).select_related('sender', 'receiver').order_by('timestamp')
+    if request.method == 'POST':
+        from notifications.views import send_notification
+        message = request.POST.get('message')
+        if message:
+            import bleach
+            cleaned_message = bleach.clean(
+                message, tags=['p', 'strong', 'em'], strip=True)
+            Message.objects.create(
+                sender=request.user, receiver=other_user, message=cleaned_message[:1000])
+            send_notification(
+                sender=request.user,
+                recipient=other_user,
+                notification_type='message',
+                message=f"{request.user.username} sent you a message!"
+            )
+    return render(request, 'chat/chat.html', {
+        'other_user': other_user,
+        'is_online': other_user.profile.is_online,
+        'last_seen': other_user.profile.last_seen,
+        'messages': messages,
+        'user_profile_pic': request.user.profile.profile_pic.url if request.user.profile.profile_pic else '/static/images/default.jpg',
+        'other_user_profile_pic': other_user.profile.profile_pic.url if other_user.profile.profile_pic else '/static/images/default.jpg',
+    })
 
 
 def home(request):

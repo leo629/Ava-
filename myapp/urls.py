@@ -24,7 +24,7 @@ urlpatterns = [
     path('dislike/<int:user_id>/', views.dislike_user, name='dislike_user'),
 
     # Swipe & Matches pages
-    path("swipe/", views.swipe_page, name="swipe_page"),
+
     path('matches/', views.get_potential_matches, name='match_results'),
     path("matches/", views.matched_users_view, name="matched_users_view"),
 

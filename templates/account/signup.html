@@ -4,30 +4,124 @@
 {% block content %}
 <div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
   <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 relative">
+
     <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Create Your Account</h2>
-    
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-6">
+      <div id="progress-bar" class="bg-blue-600 h-2 rounded-full w-0 transition-all duration-300"></div>
+    </div>
+
     <form id="signup-form" method="POST" enctype="multipart/form-data" class="space-y-4">
       {% csrf_token %}
-      {% crispy form %}
+
+      <!-- Step 1: Username + Email -->
+      <div class="form-step">
+        {{ form.username|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+        <button type="button" class="next-btn bg-blue-600 text-white py-2 px-4 rounded mt-4">Next</button>
+      </div>
+
+      <!-- Step 2: Password -->
+      <div class="form-step hidden">
+        {{ form.password1|as_crispy_field }}
+        {{ form.password2|as_crispy_field }}
+        <div class="flex justify-between mt-4">
+          <button type="button" class="prev-btn bg-gray-500 text-white py-2 px-4 rounded">Back</button>
+          <button type="button" class="next-btn bg-blue-600 text-white py-2 px-4 rounded">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Phone + DOB -->
+      <div class="form-step hidden">
+        {{ form.phone_number|as_crispy_field }}
+        {{ form.date_of_birth|as_crispy_field }}
+        <div class="flex justify-between mt-4">
+          <button type="button" class="prev-btn bg-gray-500 text-white py-2 px-4 rounded">Back</button>
+          <button type="button" class="next-btn bg-blue-600 text-white py-2 px-4 rounded">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Bio + Gender -->
+      <div class="form-step hidden">
+        {{ form.bio|as_crispy_field }}
+        {{ form.gender|as_crispy_field }}
+        <div class="flex justify-between mt-4">
+          <button type="button" class="prev-btn bg-gray-500 text-white py-2 px-4 rounded">Back</button>
+          <button type="button" class="next-btn bg-blue-600 text-white py-2 px-4 rounded">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Country + Profile Pic -->
+      <div class="form-step hidden">
+        {{ form.country|as_crispy_field }}
+        {{ form.profile_pic|as_crispy_field }}
+        <div class="flex justify-between mt-4">
+          <button type="button" class="prev-btn bg-gray-500 text-white py-2 px-4 rounded">Back</button>
+          <button type="button" class="next-btn bg-blue-600 text-white py-2 px-4 rounded">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 6: Interests + Hobbies + Want Kids + Relationship + Lifestyle -->
+      <div class="form-step hidden">
+        {{ form.interests|as_crispy_field }}
+        {{ form.hobbies|as_crispy_field }}
+        {{ form.want_kids|as_crispy_field }}
+        {{ form.relationship_goal|as_crispy_field }}
+        {{ form.lifestyle|as_crispy_field }}
+        <div class="flex justify-between mt-4">
+          <button type="button" class="prev-btn bg-gray-500 text-white py-2 px-4 rounded">Back</button>
+          <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded">Submit</button>
+        </div>
+      </div>
+
     </form>
 
-    <p class="text-sm text-center mt-4 text-gray-600 dark:text-gray-300">
-      Already have an account?
-      <a href="{% url 'account_login' %}" class="text-blue-500 hover:underline">Login</a>
-    </p>
+    <!-- Loader Overlay -->
+    <div id="loader-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-50">
+      <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
   </div>
 </div>
 
-<!-- Loader Overlay -->
-<div id="loader-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-50">
-  <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-</div>
-
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const steps = document.querySelectorAll(".form-step");
+  let currentStep = 0;
+
+  function showStep(index) {
+    steps.forEach((step, i) => step.classList.toggle("hidden", i !== index));
+    // Update progress bar
+    const progress = ((index + 1) / steps.length) * 100;
+    document.getElementById("progress-bar").style.width = progress + "%";
+  }
+
+  document.querySelectorAll(".next-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        showStep(currentStep);
+      }
+    });
+  });
+
+  document.querySelectorAll(".prev-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    });
+  });
+
+  showStep(currentStep);
+
+  // Loader on submit
   document.getElementById("signup-form").addEventListener("submit", function () {
     const loader = document.getElementById("loader-overlay");
     loader.classList.remove("opacity-0", "pointer-events-none");
     loader.classList.add("opacity-100");
   });
+});
 </script>
 {% endblock %}

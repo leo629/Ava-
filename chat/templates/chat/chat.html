@@ -1,39 +1,42 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Chat with {{ other_user.username }}{% endblock %}
-{% block content %}
-<link rel="stylesheet" href="{% static 'css/chat.css' %}">
 
-<div class="flex flex-col h-screen">
+{% block content %}
+<div class="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+
   <!-- Header -->
-  <header class="chat-header">
-    <div class="flex items-center space-x-3">
-      <img src="{% if other_user.profile.profile_pic %}{{ other_user.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}" alt="{{ other_user.username }}">
-      <h3>
-        {% if is_online %}
-          <span class="online-dot" style="background-color: green;"></span> Online
-        {% else %}
-          <span class="online-dot" style="background-color: gray;"></span> Offline
-          {% load time_filters %}
-          <small>(Last seen: {{ last_seen|humanize_timesince }} ago)</small>
-        {% endif %}
-        Chatting with {{ other_user.username }}
-      </h3>
+  <header class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+    <img src="{% if other_user.profile.profile_pic %}{{ other_user.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}" 
+         alt="{{ other_user.username }}'s profile picture" 
+         class="w-10 h-10 rounded-full object-cover">
+    <div class="flex flex-col">
+      <span class="font-semibold text-gray-800 dark:text-gray-100">{{ other_user.username }}</span>
+      {% if is_online %}
+        <span class="text-xs text-green-500">● Online</span>
+      {% else %}
+        <span class="text-xs text-gray-400">Last seen {{ last_seen|timesince }} ago</span>
+      {% endif %}
     </div>
   </header>
 
   <!-- Messages -->
-  <div id="chat-box" class="chat-messages flex-1 overflow-y-auto px-3 py-2">
+  <div id="chat-box" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
     {% for message in messages %}
-      <div class="message-row {% if message.sender == user %}right{% else %}left{% endif %}">
-        <img src="{% if message.sender.profile.profile_pic %}{{ message.sender.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}" alt="{{ message.sender.username }}" class="message-avatar {% if message.sender == user %}right{% else %}left{% endif %}">
-        <div class="message-bubble {% if message.sender == user %}right{% else %}left{% endif %}">
-          <p><strong>{{ message.sender.username }}</strong></p>
-          <p>{{ message.message }}</p>
-          <div class="message-meta">
+      <div class="flex items-end {% if message.sender == request.user %}justify-end{% endif %}">
+        {% if message.sender != request.user %}
+          <img src="{% if message.sender.profile.profile_pic %}{{ message.sender.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}" 
+               class="w-7 h-7 rounded-full mr-2" 
+               alt="{{ message.sender.username }}'s profile picture">
+        {% endif %}
+        <div class="max-w-xs md:max-w-sm px-4 py-2 rounded-2xl text-sm shadow-sm
+                    {% if message.sender == request.user %}bg-blue-500 text-white rounded-br-none{% else %}bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none{% endif %}">
+          <p>{{ message.message|safe }}</p>
+          <div class="text-[10px] mt-1 opacity-70 flex items-center gap-1">
             {{ message.timestamp|date:"H:i" }}
-            {% if message.sender == user %}
-              <span id="dot-{{ message.id }}" class="read-dot {% if message.is_read %}read{% else %}unread{% endif %}"></span>
+            {% if message.sender == request.user %}
+              <span id="dot-{{ message.id }}" 
+                    class="{% if message.is_read %}text-blue-300{% else %}text-gray-300{% endif %}">✓✓</span>
             {% endif %}
           </div>
         </div>
@@ -41,91 +44,106 @@
     {% endfor %}
   </div>
 
-  <!-- Sticky Input Area -->
-  <form id="message-form" class="w-full flex items-center gap-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky bottom-0">
+  <!-- Input Area -->
+  <form id="message-form" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
+    {% csrf_token %}
     <input
       id="message-input"
+      name="message"
       type="text"
       autocomplete="off"
       placeholder="Type a message..."
-      class="flex-grow px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 transition"
+      class="flex-grow px-4 py-2 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      aria-label="Type a message to {{ other_user.username }}"
     />
-    <button
-      type="submit"
-      title="Send"
-      class="p-2 rounded-full text-blue-500 transition duration-200 focus:outline-none"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13" />
-        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L15 22L11 13L2 9L22 2Z" />
+    <button type="submit" 
+            class="flex items-center justify-center w-10 h-10 rounded-full text-blue-500 hover:text-blue-600 transition transform hover:scale-110"
+            aria-label="Send message">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
       </svg>
     </button>
   </form>
+
 </div>
 
+{% block scripts %}
 <script>
-  const chatBox = document.getElementById('chat-box');
-  chatBox.scrollTop = chatBox.scrollHeight;
+  // Use a single global variable or check if already declared
+  window.chatBox = window.chatBox || document.getElementById('chat-box');
+  if (window.chatBox) window.chatBox.scrollTop = window.chatBox.scrollHeight;
 
-  const chatSocket = new WebSocket(
+  window.chatSocket = window.chatSocket || new WebSocket(
     (location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/chat/{{ other_user.username }}/'
   );
 
-  chatSocket.onmessage = event => {
+  window.chatSocket.onopen = () => {
+    window.chatSocket.send(JSON.stringify({ action: 'mark_read' }));
+  };
+
+  window.chatSocket.onmessage = event => {
     const data = JSON.parse(event.data);
+    if (data.error) {
+      console.error('WebSocket error:', data.error);
+      return;
+    }
 
     if (data.type === 'read_receipt') {
       data.message_ids.forEach(id => {
         const dot = document.querySelector(`#dot-${id}`);
-        if (dot) {
-          dot.classList.remove('unread');
-          dot.classList.add('read');
-        }
+        if (dot) dot.classList.replace('text-gray-300', 'text-blue-300');
       });
       return;
     }
 
-    const isMe = data.sender === "{{ user.username }}";
+    const isMe = data.sender === "{{ request.user.username }}";
     const wrapper = document.createElement('div');
-    wrapper.className = 'message-row ' + (isMe ? 'right' : 'left');
+    wrapper.className = 'flex items-end ' + (isMe ? 'justify-end' : '');
 
-    const avatar = document.createElement('img');
-    avatar.src = "{% static 'images/default.jpg' %}";
-    avatar.alt = data.sender;
-    avatar.className = 'message-avatar ' + (isMe ? 'right' : 'left');
+    if (!isMe) {
+      const avatar = document.createElement('img');
+      avatar.src = "{% if other_user.profile.profile_pic %}{{ other_user.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}";
+      avatar.className = 'w-7 h-7 rounded-full mr-2';
+      avatar.alt = "{{ other_user.username }}'s profile picture";
+      wrapper.appendChild(avatar);
+    }
 
     const bubble = document.createElement('div');
-    bubble.className = 'message-bubble ' + (isMe ? 'right' : 'left');
-
-    const dot = isMe
-      ? `<span id="dot-${data.id}" class="read-dot ${data.is_read ? 'read' : 'unread'}"></span>`
-      : '';
-
+    bubble.className = 'max-w-xs md:max-w-sm px-4 py-2 rounded-2xl text-sm shadow-sm ' +
+      (isMe ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none');
     bubble.innerHTML = `
-      <p><strong>${data.sender}</strong></p>
       <p>${data.message}</p>
-      <div class="message-meta">
+      <div class="text-[10px] mt-1 opacity-70 flex items-center gap-1">
         ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-        ${dot}
+        ${isMe ? `<span id="dot-${data.id}" class="${data.is_read ? 'text-blue-300' : 'text-gray-300'}">✓✓</span>` : ''}
       </div>
     `;
 
-    wrapper.appendChild(avatar);
     wrapper.appendChild(bubble);
-    chatBox.appendChild(wrapper);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    window.chatBox.appendChild(wrapper);
+    window.chatBox.scrollTop = window.chatBox.scrollHeight;
   };
 
-  document.getElementById('message-form').addEventListener('submit', e => {
+  window.chatSocket.onerror = () => console.error('WebSocket error');
+  window.chatSocket.onclose = () => console.log('WebSocket closed');
+
+  const messageForm = document.getElementById('message-form');
+  messageForm.addEventListener('submit', async e => {
     e.preventDefault();
     const input = document.getElementById('message-input');
     const text = input.value.trim();
-    if (!text) return;
-    chatSocket.send(JSON.stringify({
-      message: text,
-      receiver: "{{ other_user.username }}"
-    }));
-    input.value = '';
+    if (!text || window.chatSocket.readyState !== WebSocket.OPEN) return;
+
+    try {
+      window.chatSocket.send(JSON.stringify({
+        message: text,
+        receiver: "{{ other_user.username }}"
+      }));
+      input.value = '';
+    } catch (err) {
+      console.error('Send error:', err);
+    }
   });
 </script>
+{% endblock %}
 {% endblock %}

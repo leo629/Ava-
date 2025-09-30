@@ -10,15 +10,15 @@ from django.views.decorators.csrf import csrf_exempt
 from geopy.distance import geodesic
 import random
 import json
-
 from .forms import CustomSignupForm, ProfileForm, GalleryForm, EditProfileForm
 from .models import Profile, Gallery, Match, Like
 from .utils import calculate_distance
 from notifications.views import send_notification
 from allauth.account.views import SignupView
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.contrib.auth.models import User
+from django.urls import reverse_lazy
 
 
 User = get_user_model()
@@ -123,30 +123,6 @@ def get_gallery_images(request, user_id):
     return JsonResponse({'images': images})
 
 
-# ✅ Tinder-style swipe page
-@login_required
-def swipe_page(request):
-    profiles = Profile.objects.exclude(user=request.user)
-
-    swipe_data = []
-    for profile in profiles:
-        gallery_images = list(profile.user.gallery.all())
-        if gallery_images:
-            image = random.choice(gallery_images).image.url
-        else:
-            image = profile.profile_pic.url if profile.profile_pic else '/static/img/default.jpg'
-
-        swipe_data.append({
-            'id': profile.user.id,
-            'name': profile.user.username,
-            'age': profile.age,
-            'location': profile.city,
-            'image': image,
-        })
-
-    return render(request, 'swipe/swipe_page.html', {'swipe_data': swipe_data})
-
-
 # ✅ Who liked me
 @login_required
 def who_liked_me(request):
@@ -193,12 +169,38 @@ def save_location(request):
 
 
 # ✅ Custom Signup
+
+
 class CustomSignupView(SignupView):
     form_class = CustomSignupForm
-    template_name = 'myapp/signup.html'
+    template_name = "myapp/signup.html"
+    success_url = reverse_lazy("home")
 
-    def get_success_url(self):
-        return reverse('home')
+    def form_valid(self, form):
+        # Let allauth handle user + profile creation
+        response = super().form_valid(form)
+
+        # Ensure profile is updated (in case your save missed anything)
+        user = self.user  # allauth sets this
+        profile, created = Profile.objects.get_or_create(user=user)
+
+        # Push cleaned_data into profile (as backup to form.save())
+        for field in [
+            "bio", "gender", "country", "profile_pic", "date_of_birth",
+            "interests", "hobbies", "want_kids", "relationship_goal", "lifestyle"
+        ]:
+            if field in form.cleaned_data:
+                setattr(profile, field, form.cleaned_data.get(field))
+
+        profile.save()
+
+        # Save phone number if you extended AbstractUser
+        if hasattr(user, "phone_number") and "phone_number" in form.cleaned_data:
+            user.phone_number = form.cleaned_data.get("phone_number")
+            user.save()
+
+        return response
+
 
 # ✅ Profile view
 
@@ -300,23 +302,48 @@ def edit_profile(request):
 
 
 # ✅ Home with nearby users
+
 @login_required
 def home(request):
     viewer_profile = request.user.profile
     users = User.objects.exclude(id=request.user.id)  # exclude logged-in user
 
+    min_age = request.GET.get("min_age")
+    max_age = request.GET.get("max_age")
+    max_distance = request.GET.get("max_distance")
+
+    # Gender-based filtering
+    if viewer_profile.gender == 'M':
+        users = users.filter(profile__gender='F')  # men see women
+    elif viewer_profile.gender == 'F':
+        users = users.filter(profile__gender='M')  # women see men
+
     nearby_users = []
 
     for u in users:
         profile = u.profile
-        if (viewer_profile.latitude is not None and viewer_profile.longitude is not None
-                and profile.latitude is not None and profile.longitude is not None):
+
+        # ✅ Age filter
+        if min_age and profile.age and profile.age < int(min_age):
+            continue
+        if max_age and profile.age and profile.age > int(max_age):
+            continue
+
+        # ✅ Distance calculation
+        if (
+            viewer_profile.latitude is not None and viewer_profile.longitude is not None
+            and profile.latitude is not None and profile.longitude is not None
+        ):
             distance = calculate_distance(
                 viewer_profile.latitude, viewer_profile.longitude,
                 profile.latitude, profile.longitude
             )
         else:
-            distance = None  # unknown distance if coordinates are missing
+            distance = None
+
+        # ✅ Distance filter
+        if max_distance and distance is not None and distance > int(max_distance):
+            continue
 
         nearby_users.append({
             'user': u,
@@ -326,12 +353,16 @@ def home(request):
 
     # Sort by distance if available
     nearby_users.sort(
-        key=lambda x: x['distance'] if x['distance'] is not None else float('inf'))
+        key=lambda x: x['distance'] if x['distance'] is not None else float(
+            'inf')
+    )
 
-    # Limit to first 20 users
+    # Limit results
     nearby_users = nearby_users[:20]
 
-    return render(request, 'myapp/home.html', {"nearby_users": nearby_users})
+    return render(request, 'myapp/home.html', {
+        "nearby_users": nearby_users
+    })
 
 # ✅ Matched users
 
