@@ -13,6 +13,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'ava-nvqb.onrender.com',
+    "78.46.243.51"
 ]
 
 
