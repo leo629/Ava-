@@ -14,6 +14,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'ava-nvqb.onrender.com',
     "78.46.243.51"
+    'avadating.site',      # your domain
+    'www.avadating.site',  # optional, if you use www
 ]
 
 
