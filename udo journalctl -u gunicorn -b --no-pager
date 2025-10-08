@@ -1,0 +1,17 @@
+[0;1;31m●[0m gunicorn.service - Gunicorn daemon for Ava Dating Django project
+     Loaded: loaded (/etc/systemd/system/gunicorn.service; enabled; vendor preset: enabled)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Sat 2025-10-04 06:26:07 UTC; 25s ago
+    Process: 89541 ExecStart=/root/Ava-/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127.0.0.1:8000 core.wsgi:application [0;1;31m(code=exited, status=1/FAILURE)[0m
+   Main PID: 89541 (code=exited, status=1/FAILURE)
+        CPU: 119ms
+
+Oct 04 06:26:03 avadating gunicorn[89541]: [2025-10-04 06:26:03 +0000] [89541] [ERROR] connection to ('127.0.0.1', 8000) failed: [Errno 98] Address already in use
+Oct 04 06:26:04 avadating gunicorn[89541]: [2025-10-04 06:26:04 +0000] [89541] [ERROR] Connection in use: ('127.0.0.1', 8000)
+Oct 04 06:26:04 avadating gunicorn[89541]: [2025-10-04 06:26:04 +0000] [89541] [ERROR] connection to ('127.0.0.1', 8000) failed: [Errno 98] Address already in use
+Oct 04 06:26:05 avadating gunicorn[89541]: [2025-10-04 06:26:05 +0000] [89541] [ERROR] Connection in use: ('127.0.0.1', 8000)
+Oct 04 06:26:05 avadating gunicorn[89541]: [2025-10-04 06:26:05 +0000] [89541] [ERROR] connection to ('127.0.0.1', 8000) failed: [Errno 98] Address already in use
+Oct 04 06:26:06 avadating gunicorn[89541]: [2025-10-04 06:26:06 +0000] [89541] [ERROR] Connection in use: ('127.0.0.1', 8000)
+Oct 04 06:26:06 avadating gunicorn[89541]: [2025-10-04 06:26:06 +0000] [89541] [ERROR] connection to ('127.0.0.1', 8000) failed: [Errno 98] Address already in use
+Oct 04 06:26:07 avadating gunicorn[89541]: [2025-10-04 06:26:07 +0000] [89541] [ERROR] Can't connect to ('127.0.0.1', 8000)
+Oct 04 06:26:07 avadating systemd[1]: [0;1;39m[0;1;31m[0;1;39mgunicorn.service: Main process exited, code=exited, status=1/FAILURE[0m
+Oct 04 06:26:07 avadating systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mgunicorn.service: Failed with result 'exit-code'.[0m

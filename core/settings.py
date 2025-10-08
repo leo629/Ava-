@@ -13,14 +13,18 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'ava-nvqb.onrender.com',
-    "78.46.243.51"
-    'avadating.site',      # your domain
-    'www.avadating.site',  # optional, if you use www
+    '78.46.243.51',        # your server IP
+    'avadating.site',       # your domain
+    'www.avadating.site',
 ]
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 CSRF_TRUSTED_ORIGINS = [
     "https://ava-nvqb.onrender.com",  # ✅
+    "https://www.avadating.site",
 ]
 
 
@@ -84,10 +88,10 @@ LOGOUT_REDIRECT_URL = '/'
 
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [os.getenv("REDIS_URL", "redis://localhost:6379")],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
         },
     },
 }
