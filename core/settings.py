@@ -175,7 +175,10 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 ASGI_APPLICATION = 'core.asgi.application'
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = '/var/www/avadating/media'
+
+STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/avadating/staticfiles'

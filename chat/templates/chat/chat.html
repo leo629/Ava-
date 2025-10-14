@@ -31,7 +31,7 @@
         {% endif %}
         <div class="max-w-xs md:max-w-sm px-4 py-2 rounded-2xl text-sm shadow-sm
                     {% if message.sender == request.user %}bg-blue-500 text-white rounded-br-none{% else %}bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none{% endif %}">
-          <p>{{ message.message|safe }}</p>
+          <p>{{ message.message|escape }}</p>
           <div class="text-[10px] mt-1 opacity-70 flex items-center gap-1">
             {{ message.timestamp|date:"H:i" }}
             {% if message.sender == request.user %}
@@ -69,25 +69,35 @@
 
 {% block scripts %}
 <script>
-  // Use a single global variable or check if already declared
-  window.chatBox = window.chatBox || document.getElementById('chat-box');
-  if (window.chatBox) window.chatBox.scrollTop = window.chatBox.scrollHeight;
+  // Utility: escape HTML to prevent JS errors from user input
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
-  window.chatSocket = window.chatSocket || new WebSocket(
+  // Scroll chat to bottom
+  const chatBox = document.getElementById('chat-box');
+  if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+
+  // WebSocket setup
+  const chatSocket = new WebSocket(
     (location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/chat/{{ other_user.username }}/'
   );
 
-  window.chatSocket.onopen = () => {
-    window.chatSocket.send(JSON.stringify({ action: 'mark_read' }));
+  chatSocket.onopen = () => {
+    chatSocket.send(JSON.stringify({ action: 'mark_read' }));
   };
 
-  window.chatSocket.onmessage = event => {
+  chatSocket.onmessage = event => {
     const data = JSON.parse(event.data);
+
     if (data.error) {
       console.error('WebSocket error:', data.error);
       return;
     }
 
+    // Read receipt handling
     if (data.type === 'read_receipt') {
       data.message_ids.forEach(id => {
         const dot = document.querySelector(`#dot-${id}`);
@@ -96,6 +106,7 @@
       return;
     }
 
+    // Message rendering
     const isMe = data.sender === "{{ request.user.username }}";
     const wrapper = document.createElement('div');
     wrapper.className = 'flex items-end ' + (isMe ? 'justify-end' : '');
@@ -111,8 +122,9 @@
     const bubble = document.createElement('div');
     bubble.className = 'max-w-xs md:max-w-sm px-4 py-2 rounded-2xl text-sm shadow-sm ' +
       (isMe ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none');
+
     bubble.innerHTML = `
-      <p>${data.message}</p>
+      <p>${escapeHtml(data.message)}</p>
       <div class="text-[10px] mt-1 opacity-70 flex items-center gap-1">
         ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
         ${isMe ? `<span id="dot-${data.id}" class="${data.is_read ? 'text-blue-300' : 'text-gray-300'}">✓✓</span>` : ''}
@@ -120,29 +132,26 @@
     `;
 
     wrapper.appendChild(bubble);
-    window.chatBox.appendChild(wrapper);
-    window.chatBox.scrollTop = window.chatBox.scrollHeight;
+    chatBox.appendChild(wrapper);
+    chatBox.scrollTop = chatBox.scrollHeight;
   };
 
-  window.chatSocket.onerror = () => console.error('WebSocket error');
-  window.chatSocket.onclose = () => console.log('WebSocket closed');
+  chatSocket.onerror = () => console.error('WebSocket error');
+  chatSocket.onclose = () => console.log('WebSocket closed');
 
+  // Sending messages
   const messageForm = document.getElementById('message-form');
-  messageForm.addEventListener('submit', async e => {
+  messageForm.addEventListener('submit', e => {
     e.preventDefault();
     const input = document.getElementById('message-input');
     const text = input.value.trim();
-    if (!text || window.chatSocket.readyState !== WebSocket.OPEN) return;
+    if (!text || chatSocket.readyState !== WebSocket.OPEN) return;
 
-    try {
-      window.chatSocket.send(JSON.stringify({
-        message: text,
-        receiver: "{{ other_user.username }}"
-      }));
-      input.value = '';
-    } catch (err) {
-      console.error('Send error:', err);
-    }
+    chatSocket.send(JSON.stringify({
+      message: text,
+      receiver: "{{ other_user.username }}"
+    }));
+    input.value = '';
   });
 </script>
 {% endblock %}
