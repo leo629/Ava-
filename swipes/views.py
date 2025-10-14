@@ -1,21 +1,40 @@
+
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
-from myapp.models import Profile
+from myapp.models import Profile, Like, Gallery  # adjust imports as needed
 from .models import Swipe
-from itertools import chain
+from django.contrib.auth.models import User
 
-
+# ---------------------------
+# SWIPE PAGE VIEW
+# ---------------------------
 @login_required
 def swipe_page(request):
-    # Exclude profiles already swiped or the current user
-    swiped_ids = Swipe.objects.filter(
-        swiper=request.user).values_list('swiped_id', flat=True)
-    profile = Profile.objects.exclude(user=request.user).exclude(
-        user__id__in=swiped_ids).first()
+    viewer_profile = request.user.profile
+
+    # ✅ Show only opposite gender profiles
+    opposite_gender = "female" if viewer_profile.gender == "male" else "male"
+
+    # ✅ Exclude already swiped or current user
+    swiped_ids = Swipe.objects.filter(swiper=request.user).values_list('swiped_id', flat=True)
+
+    # ✅ Get first available profile
+    profile = (
+        Profile.objects.filter(gender=opposite_gender)
+        .exclude(user=request.user)
+        .exclude(id__in=swiped_ids)
+        .order_by("?")
+        .first()
+    )
+
     return render(request, 'swipes/swipes.html', {'profile': profile})
 
 
+# ---------------------------
+# SWIPE ACTION VIEW
+# ---------------------------
 @login_required
 def swipe_action(request):
     if request.method != "POST":
@@ -29,13 +48,12 @@ def swipe_action(request):
 
     # Get the Profile being swiped
     swiped_profile = get_object_or_404(Profile, id=profile_id)
-
-    # ✅ Use Profile objects instead of User
     swiper_profile = request.user.profile
 
+    # Record the swipe
     swipe, created = Swipe.objects.get_or_create(
-        swiper=request.user,        # ✅ User
-        swiped=swiped_profile,      # ✅ Profile
+        swiper=request.user,  # keep User for compatibility
+        swiped=swiped_profile,
         defaults={'action': action}
     )
 
@@ -43,19 +61,34 @@ def swipe_action(request):
         swipe.action = action
         swipe.save()
 
-    # Get next profile excluding already swiped
-    swiped_ids = Swipe.objects.filter(
-        swiper=request.user    # ✅ User
-    ).values_list('swiped_id', flat=True)
+    # ✅ Check for a MATCH (both users liked each other)
+    if action == "like":
+        liked_back = Swipe.objects.filter(
+            swiper=swiped_profile.user,
+            swiped=swiper_profile,
+            action="like"
+        ).exists()
 
-    next_profile = Profile.objects.exclude(user=request.user).exclude(
-        id__in=swiped_ids
-    ).order_by("?").first()
+        if liked_back:
+            # Optional: create a Match model or send notification
+            print("🎉 It's a match between", swiper_profile.user.username, "and", swiped_profile.user.username)
+
+    # ✅ Get next profile (opposite gender + not swiped yet)
+    opposite_gender = "female" if swiper_profile.gender == "male" else "male"
+
+    swiped_ids = Swipe.objects.filter(swiper=request.user).values_list('swiped_id', flat=True)
+    next_profile = (
+        Profile.objects.filter(gender=opposite_gender)
+        .exclude(user=request.user)
+        .exclude(id__in=swiped_ids)
+        .order_by("?")
+        .first()
+    )
 
     if not next_profile:
         return JsonResponse({"status": "ok", "next_profile": None})
 
-    # Prepare gallery images
+    # ✅ Prepare gallery images safely
     images = []
     if next_profile.profile_pic:
         images.append(next_profile.profile_pic.url)
@@ -70,6 +103,7 @@ def swipe_action(request):
             "id": next_profile.id,
             "username": next_profile.user.username,
             "bio": next_profile.bio or "",
-            "images": images,
+            "images": images or ["/static/images/default_profile.jpg"],
         }
     })
+    
