@@ -4,32 +4,32 @@
 {% block content %}
 <div id="swipe-container" class="relative w-full max-w-md mx-auto h-[100vh] overflow-hidden bg-black">
   {% if profile %}
-    <div id="profile-card" 
+    <div id="profile-card"
          class="absolute inset-0 bg-black shadow-xl overflow-hidden transform transition-all duration-300 rounded-2xl">
 
       <!-- Profile Image -->
-      <img id="profile-image" 
-           src="{% if profile.profile_pic %}{{ profile.profile_pic.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" 
+      <img id="profile-image"
+           src="{% if profile.profile_pic %}{{ profile.profile_pic.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
            class="w-full h-full object-cover transition-opacity duration-1000 opacity-100"
            alt="{{ profile.user.username }}">
 
       <!-- Overlay info -->
-      <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+      <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-white">
         <h2 id="profile-username" class="text-3xl font-bold">{{ profile.user.username }}</h2>
-        <p id="profile-bio" class="text-base mt-1">{{ profile.bio|default:"No bio" }}</p>
+        <p id="profile-bio" class="text-base mt-1">{{ profile.bio|default:"No bio yet." }}</p>
       </div>
 
       <!-- Hidden inputs -->
       <input type="hidden" id="profile-id" value="{{ profile.id }}">
-      
+
       <!-- Like / Dislike buttons -->
       <div class="absolute bottom-20 left-0 right-0 flex justify-center space-x-12">
-        <button onclick="sendSwipe('dislike')" 
-                class="bg-red-500 text-white p-6 rounded-full shadow-lg hover:bg-red-600 text-2xl">
+        <button onclick="sendSwipe('dislike')"
+                class="bg-red-500 text-white p-6 rounded-full shadow-lg hover:bg-red-600 text-2xl transition">
           ❌
         </button>
-        <button onclick="sendSwipe('like')" 
-                class="bg-green-500 text-white p-6 rounded-full shadow-lg hover:bg-green-600 text-2xl">
+        <button onclick="sendSwipe('like')"
+                class="bg-green-500 text-white p-6 rounded-full shadow-lg hover:bg-green-600 text-2xl transition">
           ❤️
         </button>
       </div>
@@ -39,57 +39,19 @@
   {% endif %}
 </div>
 
+<!-- MATCH ALERT -->
+<div id="match-alert"
+     class="hidden fixed inset-0 bg-black/80 flex items-center justify-center text-white text-4xl font-bold z-50">
+  🎉 It's a Match!
+</div>
+
 <script>
-  // Swipe card drag functionality
-  let card = document.getElementById('profile-card');
-  if (card) {
-    let startX, currentX, isDragging = false;
+  let galleryInterval;
 
-    card.addEventListener('mousedown', startDrag);
-    card.addEventListener('touchstart', startDrag);
-
-    function startDrag(e) {
-      startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-      isDragging = true;
-
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('touchmove', onDrag);
-      document.addEventListener('mouseup', endDrag);
-      document.addEventListener('touchend', endDrag);
-    }
-
-    function onDrag(e) {
-      if (!isDragging) return;
-      currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-      let deltaX = currentX - startX;
-      card.style.transform = `translate(${deltaX}px, 0) rotate(${deltaX * 0.1}deg)`;
-    }
-
-    function endDrag() {
-      if (!isDragging) return;
-      isDragging = false;
-      let deltaX = currentX - startX;
-
-      if (deltaX > 120) {
-        card.style.transform = "translateX(1000px) rotate(30deg)";
-        setTimeout(() => sendSwipe('like'), 300);
-      } else if (deltaX < -120) {
-        card.style.transform = "translateX(-1000px) rotate(-30deg)";
-        setTimeout(() => sendSwipe('dislike'), 300);
-      } else {
-        card.style.transform = "translate(0,0) rotate(0)";
-      }
-
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('mouseup', endDrag);
-      document.removeEventListener('touchend', endDrag);
-    }
-  }
-
-  // Handle swipes via AJAX (no reload)
+  // Handle swipe actions
   function sendSwipe(action) {
-    const profileId = document.getElementById('profile-id').value;
+    const profileId = document.getElementById('profile-id')?.value;
+    if (!profileId) return;
 
     fetch("{% url 'swipe_action' %}", {
       method: 'POST',
@@ -97,66 +59,79 @@
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-CSRFToken': '{{ csrf_token }}'
       },
-      body: new URLSearchParams({
-        profile_id: profileId,
-        action: action
-      })
+      body: new URLSearchParams({ profile_id: profileId, action: action })
     })
     .then(res => res.json())
     .then(data => {
+      if (data.status === 'ok' && data.match === true) {
+        showMatchAlert();
+      }
+
       if (data.next_profile) {
         loadNextProfile(data.next_profile);
       } else {
         document.getElementById('swipe-container').innerHTML =
           '<p class="text-center text-gray-500 mt-20">No more profiles to swipe.</p>';
       }
-    });
+    })
+    .catch(err => console.error('Swipe error:', err));
   }
 
-  let galleryInterval;
-
-  // Replace profile card with next one
+  // Replace current profile with next one
   function loadNextProfile(p) {
     const card = document.getElementById('profile-card');
     if (!card) return;
 
-    document.getElementById('profile-id').value = p.id;
-    document.getElementById('profile-image').src = p.images[0] || "/static/images/default_profile.jpg";
-    document.getElementById('profile-username').innerText = p.username;
-    document.getElementById('profile-bio').innerText = p.bio || "No bio";
+    const img = document.getElementById('profile-image');
+    const username = document.getElementById('profile-username');
+    const bio = document.getElementById('profile-bio');
+    const idField = document.getElementById('profile-id');
 
-    // Reset swipe animation
+    idField.value = p.id;
+    username.textContent = p.username;
+    bio.textContent = p.bio || "No bio yet.";
+    img.src = p.images?.[0] || "{% static 'images/default_profile.jpg' %}";
+
+    // Reset animation
     card.style.transform = "translate(0,0) rotate(0)";
 
     // Reset gallery rotation
     if (galleryInterval) clearInterval(galleryInterval);
     if (p.images && p.images.length > 1) {
       let index = 0;
-      const profileImg = document.getElementById('profile-image');
       galleryInterval = setInterval(() => {
-        profileImg.style.opacity = 0;
+        img.style.opacity = 0;
         setTimeout(() => {
           index = (index + 1) % p.images.length;
-          profileImg.src = p.images[index];
-          profileImg.style.opacity = 1;
+          img.src = p.images[index];
+          img.style.opacity = 1;
         }, 400);
       }, 4000);
     }
   }
 
-  // Initial gallery rotation (first profile)
+  // Show "It's a Match" alert briefly
+  function showMatchAlert() {
+    const alertBox = document.getElementById('match-alert');
+    alertBox.classList.remove('hidden');
+    setTimeout(() => {
+      alertBox.classList.add('hidden');
+    }, 2000);
+  }
+
+  // Initial gallery rotation setup
   {% if profile %}
-    loadNextProfile({
-      id: {{ profile.id }},
-      username: "{{ profile.user.username }}",
-      bio: "{{ profile.bio|default:'No bio' }}",
-      images: [
-        {% if profile.profile_pic %}"{{ profile.profile_pic.url }}",{% endif %}
-        {% for img in profile.user.gallery_set.all %}
-          "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
-        {% endfor %}
-      ]
-    });
+  loadNextProfile({
+    id: {{ profile.id }},
+    username: "{{ profile.user.username }}",
+    bio: "{{ profile.bio|default:'No bio yet.' }}",
+    images: [
+      {% if profile.profile_pic %}"{{ profile.profile_pic.url }}",{% endif %}
+      {% for img in profile.user.gallery_set.all %}
+        "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  });
   {% endif %}
 </script>
 {% endblock %}
