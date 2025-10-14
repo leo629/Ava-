@@ -1,12 +1,17 @@
-<!-- swipe/swipe_page.html -->
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
 
 <div class="flex justify-center items-center min-h-screen bg-gray-100">
   <div id="swipe-container" class="relative w-80 h-[32rem]">
     {% for user in swipe_data %}
       <div class="absolute inset-0 bg-white rounded-2xl shadow-lg overflow-hidden swipe-card transform transition-all duration-300 ease-in-out" data-user-id="{{ user.id }}">
-        <img src="{{ user.image }}" class="w-full h-3/4 object-cover user-image transition duration-300 ease-in-out" alt="User Image">
+        <img 
+          src="{{ user.image|default:'/static/img/default.jpg' }}" 
+          class="w-full h-3/4 object-cover user-image transition duration-300 ease-in-out" 
+          alt="{{ user.name }}"
+          onerror="this.src='/static/img/default.jpg';"
+        >
         <div class="p-4">
           <h2 class="text-xl font-bold">{{ user.name }}</h2>
           <p class="text-sm text-gray-500">{{ user.age }} - {{ user.location }}</p>
@@ -21,7 +26,24 @@
 </div>
 
 <script>
-  // --- Image rotation for gallery ---
+  // --- CSRF helper ---
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // --- Gallery rotation ---
   const swipeCards = document.querySelectorAll('.swipe-card');
   swipeCards.forEach(card => {
     const userId = card.getAttribute('data-user-id');
@@ -35,17 +57,21 @@
             index = (index + 1) % data.images.length;
             imageElement.src = data.images[index];
           }, 3000);
+        } else if (data.images.length === 0) {
+          imageElement.src = "/static/img/default.jpg";
         }
       });
   });
 
-  // --- Tinder-style swipe logic ---
+  // --- Swipe interaction ---
   const container = document.getElementById('swipe-container');
   let isDragging = false, startX = 0, startY = 0, currentCard = null;
 
   function attachSwipe(card) {
     card.addEventListener('mousedown', startDrag);
     card.addEventListener('touchstart', startDrag, { passive: true });
+    card.querySelector('.swipe-like').addEventListener('click', () => handleAction(card, 'like'));
+    card.querySelector('.swipe-dislike').addEventListener('click', () => handleAction(card, 'dislike'));
   }
 
   function startDrag(e) {
@@ -67,7 +93,6 @@
     const dx = x - startX;
     const dy = y - startY;
     const rotate = dx * 0.05;
-
     currentCard.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
   }
 
@@ -77,16 +102,9 @@
     const dx = x - startX;
 
     if (Math.abs(dx) > 120) {
-      // Swipe accepted
       const direction = dx > 0 ? 'right' : 'left';
-      currentCard.style.transition = "transform 0.3s ease-out";
-      currentCard.style.transform = `translate(${dx * 3}px, 100px) rotate(${dx > 0 ? 30 : -30}deg)`;
-      setTimeout(() => {
-        currentCard.remove();
-        showNextCard();
-      }, 300);
+      handleAction(currentCard, direction === 'right' ? 'like' : 'dislike');
     } else {
-      // Reset position
       currentCard.style.transition = "transform 0.3s ease-out";
       currentCard.style.transform = "";
     }
@@ -98,14 +116,34 @@
     document.removeEventListener('touchend', endDrag);
   }
 
+  function handleAction(card, action) {
+    const userId = card.getAttribute('data-user-id');
+    const endpoint = action === 'like' ? `/like/${userId}/` : `/dislike/${userId}/`;
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken },
+    })
+      .then(() => {
+        card.style.transition = "transform 0.4s ease-out";
+        card.style.transform = action === 'like'
+          ? "translate(400px, 100px) rotate(30deg)"
+          : "translate(-400px, 100px) rotate(-30deg)";
+        setTimeout(() => {
+          card.remove();
+          showNextCard();
+        }, 300);
+      })
+      .catch(err => console.error("Action failed:", err));
+  }
+
   function showNextCard() {
     const remainingCards = container.querySelectorAll('.swipe-card');
     if (remainingCards.length === 0) {
-      container.innerHTML = '<p class="text-center text-gray-600">No more profiles</p>';
+      container.innerHTML = '<p class="text-center text-gray-600 mt-10">No more profiles nearby 💔</p>';
     }
   }
 
-  // Attach swipe events to all cards
   swipeCards.forEach(card => attachSwipe(card));
 </script>
 
