@@ -199,7 +199,7 @@ class CustomSignupView(SignupView):
             user.phone_number = form.cleaned_data.get("phone_number")
             user.save()
 
-        return response
+         return redirect("upload_images")
 
 
 # ✅ Profile view
