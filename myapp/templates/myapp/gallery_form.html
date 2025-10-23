@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Upload Your Photos</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="images" multiple required class="block w-full border border-gray-300 rounded p-2 mb-4">
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+        Upload and Continue
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

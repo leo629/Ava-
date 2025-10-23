@@ -8,7 +8,10 @@
 <form id="login-form" method="post" class="login-form">
   {% csrf_token %}
   <div class="imgcontainer">
-    <img src="{% static 'images/avatar.png' %}" alt="Default Picture" class="w-16 h-16 rounded-full">
+    <!-- ✅ External avatar URL that always works -->
+    <img src="https://ui-avatars.com/api/?name=User&background=random" 
+         alt="Default Picture" 
+         class="w-16 h-16 rounded-full mx-auto">
   </div>
   
   <div class="container">

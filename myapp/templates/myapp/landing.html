@@ -2,35 +2,50 @@
 {% load static %}
 {% block content %}
 
-<div class="relative min-h-screen flex items-center justify-center bg-cover bg-center" 
-     style="background-image: url('{% static "images/thinh-do-wreXxxbXyaE-unsplash.jpg" %}');">
-  <!-- Dark overlay for readability -->
-  <div class="absolute inset-0 bg-black/60"></div>
+<!-- Hero Section -->
+<section 
+  class="relative min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
+  style="background-image: url('https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=1920&q=80');">
+
+  <!-- Dark overlay -->
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
 
   <!-- Content -->
-  <div class="relative z-10 text-center text-white px-6 md:px-12">
-    <h1 class="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
-      Welcome to <span class="text-pink-400">Ava Dating</span>
+  <div class="relative z-10 text-center text-white px-6 md:px-12 animate-fade-in">
+    <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+      Find Real Love on <span class="text-pink-500">Ava Dating</span>
     </h1>
 
-    <p class="text-base sm:text-lg md:text-xl mb-6 max-w-2xl mx-auto">
-      Meet real people. Build genuine connections.  
-      Serious dating for serious people.
+    <p class="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-gray-200">
+      Connect with genuine people, share real moments, and build something meaningful.
     </p>
 
     <div class="flex flex-col sm:flex-row justify-center gap-4">
-  <a href="{% url 'account_signup' %}" 
-     class="px-6 py-3 bg-pink-600 hover:bg-pink-700 rounded-full text-white font-semibold transition text-center">
-    Get Started
-  </a>
-  <a href="{% url 'account_login' %}" 
-     class="px-6 py-3 bg-white text-pink-600 hover:bg-gray-200 rounded-full font-semibold transition text-center">
-    Log In
-  </a>
-</div>
-
+      <a href="{% url 'account_signup' %}" 
+         class="px-8 py-3 bg-pink-600 hover:bg-pink-700 rounded-full text-white font-semibold transition-transform transform hover:scale-105 shadow-lg">
+        Get Started
+      </a>
+      <a href="{% url 'account_login' %}" 
+         class="px-8 py-3 bg-white text-pink-600 hover:bg-gray-100 rounded-full font-semibold transition-transform transform hover:scale-105 shadow-lg">
+        Log In
+      </a>
+    </div>
   </div>
-</div>
+
+  <!-- Gradient at bottom for smooth fade -->
+  <div class="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-black/80 to-transparent"></div>
+</section>
+
+<!-- Fade-in animation -->
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 1.2s ease-out both;
+  }
+</style>
 
 {% endblock %}
 {% block footer %}{% endblock footer %}

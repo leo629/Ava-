@@ -9,7 +9,7 @@
   <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <title>{% block title %}Ava Project{% endblock %}</title>
+  <title>{% block title %}Ava Dating{% endblock %}</title>
   <link rel="icon" type="image/png" href="{% static 'favicon.png' %}" />
 
   <!-- Dark Mode Preload -->
@@ -55,7 +55,7 @@
 
     <!-- Logo -->
     <a href="/" class="text-xl font-bold tracking-wide flex items-center gap-1">
-      <i data-lucide="flame" class="w-5 h-5 text-pink-500"></i> meet
+      meet
     </a>
 
     <!-- Desktop Nav -->
@@ -64,7 +64,7 @@
         <li><a href="{% url 'user_profile' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="user" class="w-5 h-5"></i>Profile</a></li>
         <li><a href="{% url 'edit_profile' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="edit" class="w-5 h-5"></i>Edit</a></li>
         <li><a href="{% url 'chat_list' %}" class="flex items-center gap-1 hover:text-pink-500 relative"><i data-lucide="message-circle" class="w-5 h-5"></i>Chat<span id="chat-notification-count" class="absolute -top-2 -right-3 bg-red-500 text-xs px-1 rounded-full hidden">0</span></a></li>
-        <li><a href="{% url 'swipe_page' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="heart" class="w-5 h-5"></i>Swipe</a></li>
+        <li><a href="{% url 'swipes:swipe_page' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="heart" class="w-5 h-5"></i>Swipe</a></li>
         <li><a href="{% url 'who_liked_me' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="thumbs-up" class="w-5 h-5"></i>Likes</a></li>
         <li><a href="{% url 'match_results' %}" class="flex items-center gap-1 hover:text-pink-500"><i data-lucide="users" class="w-5 h-5"></i>Matches</a></li>
         <li id="notification-wrapper" class="relative cursor-pointer"><i data-lucide="bell" class="w-5 h-5 hover:text-pink-500"></i><span id="notification-count" class="absolute -top-2 -right-2 bg-red-500 text-xs px-1 rounded-full hidden">0</span><div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-gray-700 shadow-lg rounded-lg overflow-hidden z-50"></div></li>
@@ -77,34 +77,74 @@
     </ul>
 
     <!-- Mobile Top Icons -->
-    <div class="flex md:hidden items-center gap-3 text-gray-200">
-      {% if user.is_authenticated %}
-        <a href="{% url 'chat_list' %}" class="relative p-1"><i data-lucide="message-circle" class="w-5 h-5"></i><span id="chat-notification-count-mobile" class="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full hidden">0</span></a>
-        <button id="notification-wrapper-mobile" class="relative p-1"><i data-lucide="bell" class="w-5 h-5"></i><span id="notification-count-mobile" class="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full hidden">0</span></button>
-        <a href="{% url 'user_profile' %}" class="p-1"><i data-lucide="user" class="w-5 h-5"></i></a>
-        <button id="mobileMenuToggle" class="p-1"><i data-lucide="menu" class="w-5 h-5"></i></button>
-        <a href="{% url 'account_logout' %}" class="p-1"><i data-lucide="log-out" class="w-5 h-5"></i></a>
-      {% else %}
-        <a href="{% url 'account_login' %}" class="p-1"><i data-lucide="log-in" class="w-5 h-5"></i></a>
-        <a href="{% url 'account_signup' %}" class="p-1"><i data-lucide="user-plus" class="w-5 h-5"></i></a>
-      {% endif %}
-      <button id="darkModeToggleMobile" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition"><i data-lucide="moon" class="w-5 h-5 text-yellow-300"></i></button>
-    </div>
-  </div>
+<div class="flex md:hidden items-center gap-3 text-gray-200">
+  {% if user.is_authenticated %}
+    <!-- Chat -->
+    <a href="{% url 'chat_list' %}" class="relative p-1">
+      <i data-lucide="message-circle" class="w-5 h-5"></i>
+      <span id="chat-notification-count-mobile" class="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full hidden">0</span>
+    </a>
 
-  <!-- Mobile Slide Menu -->
-  <div id="mobile-slide-menu" class="fixed top-0 right-0 h-full w-64 bg-black dark:bg-gray-800 transform translate-x-full transition-transform duration-300 z-50 p-6">
-    <button id="closeMobileMenu" class="mb-4 text-gray-300"><i data-lucide="x" class="w-5 h-5"></i></button>
-    <ul class="flex flex-col gap-4 text-gray-200">
-      <li><a href="{% url 'swipe_page' %}" class="hover:text-pink-500 flex items-center gap-2"><i data-lucide="heart" class="w-5 h-5"></i>Swipe</a></li>
-      <li><a href="{% url 'who_liked_me' %}" class="hover:text-pink-500 flex items-center gap-2"><i data-lucide="thumbs-up" class="w-5 h-5"></i>Likes</a></li>
-      <li><a href="{% url 'match_results' %}" class="hover:text-pink-500 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5"></i>Matches</a></li>
-      <li><a href="{% url 'terms' %}" class="hover:text-pink-500">Terms & Conditions</a></li>
-      <li><a href="{% url 'privacy' %}" class="hover:text-pink-500">Privacy Policy</a></li>
-      <li><a href="{% url 'about' %}" class="hover:text-pink-500">About Us</a></li>
-      <li><a href="{% url 'contact' %}" class="hover:text-pink-500">Contact</a></li>
-    </ul>
-  </div>
+    <!-- Profile -->
+    <a href="{% url 'user_profile' %}" class="p-1"><i data-lucide="user" class="w-5 h-5"></i></a>
+
+    <!-- Notifications -->
+    <button id="notification-wrapper-mobile" class="relative p-1">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+      <span id="notification-count-mobile" class="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full hidden">0</span>
+    </button>
+
+    <!-- Swipe -->
+    <a href="{% url 'swipes:swipe_page' %}" class="p-1"><i data-lucide="heart" class="w-5 h-5"></i></a>
+
+    
+<button id="darkModeToggleMobile" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition"><i data-lucide="moon" class="w-5 h-5 text-yellow-300"></i></b>
+    <!-- Menu Toggle -->
+    <button id="mobileMenuToggle" class="p-1"><i data-lucide="menu" class="w-5 h-5"></i></button>
+  {% else %}
+    <a href="{% url 'account_login' %}" class="p-1"><i data-lucide="log-in" class="w-5 h-5"></i></a>
+    <a href="{% url 'account_signup' %}" class="p-1"><i data-lucide="user-plus" class="w-5 h-5"></i></a>
+  {% endif %}
+</div>
+
+<!-- Mobile Slide Menu -->
+<div id="mobile-slide-menu" class="fixed top-0 right-0 h-full w-64 bg-black dark:bg-gray-800 transform translate-x-full transition-transform duration-300 z-50 p-6">
+  <button id="closeMobileMenu" class="mb-4 text-gray-300"><i data-lucide="x" class="w-5 h-5"></i></button>
+  <ul class="flex flex-col gap-4 text-gray-200">
+    {% if user.is_authenticated %}
+
+    <!-- Likes -->
+    <a href="{% url 'who_liked_me' %}" class="p-1"><i data-lucide="thumbs-up" class="w-5 h-5"></i>Likes</a>
+      <!-- Matches -->
+      <li>
+        <a href="{% url 'match_results' %}" class="hover:text-pink-500 flex items-center gap-2">
+          <i data-lucide="users" class="w-5 h-5"></i>Matches
+        </a>
+      </li>
+
+    <!--Delete Profile-->
+     <li>
+      <a href="{% url 'delete_profile' %}" class="hover:text-red-500 flex items-center gap-2">
+        <i data-lucide="trash-2" class="w-5 h-5"></i>Delete Profile
+      </a>
+    </li>
+
+      <!-- Logout -->
+      <li>
+        <a href="{% url 'account_logout' %}" class="hover:text-pink-500 flex items-center gap-2">
+          <i data-lucide="log-out" class="w-5 h-5"></i>Logout
+        </a>
+      </li>
+
+    {% endif %}
+
+    <!-- Public Pages -->
+    <li><a href="{% url 'terms' %}" class="hover:text-pink-500">Terms & Conditions</a></li>
+    <li><a href="{% url 'privacy' %}" class="hover:text-pink-500">Privacy Policy</a></li>
+    <li><a href="{% url 'about' %}" class="hover:text-pink-500">About Us</a></li>
+    <li><a href="{% url 'contact' %}" class="hover:text-pink-500">Contact</a></li>
+  </ul>
+</div>
 
   <!-- Mobile Notification Modal -->
   <div id="mobile-notification-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
@@ -127,7 +167,7 @@
 
     <div>
       <a href="/" class="flex items-center gap-2 text-white font-bold text-lg">
-        <i data-lucide="flame" class="w-5 h-5 text-pink-500"></i> Aerofold
+        <i data-lucide="flame" class="w-5 h-5 text-pink-500"></i> Avadating
       </a>
       <p class="text-sm mt-2 text-gray-400">Connecting people with style.</p>
     </div>
@@ -154,7 +194,7 @@
   </div>
 
   <div class="border-t border-gray-700 mt-6 py-4 text-center text-sm text-gray-400">
-    © 2025 <span class="font-semibold text-white">Aerofold</span>. All rights reserved.
+    © 2025 <span class="font-semibold text-white">Avadating</span>. All rights reserved.
   </div>
 </footer>
 {% endblock footer %}
@@ -169,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('darkModeToggleMobile')
   ];
 
-  // --- THEME TOGGLE ---
+ // --- THEME TOGGLE ---
   function setTheme(theme) {
     htmlElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);

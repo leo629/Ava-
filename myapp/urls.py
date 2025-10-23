@@ -16,6 +16,7 @@ urlpatterns = [
     path('save_location/', views.save_location, name='save_location'),
     path('get-gallery-images/<int:user_id>/',
          views.get_gallery_images, name='get_gallery_images'),
+    path("gallery/", views.gallery_form, name="gallery_form"),
 
     # Likes / Matches
     path('who-liked-me/', views.who_liked_me, name='who_liked_me'),
@@ -34,4 +35,5 @@ urlpatterns = [
     path('privacy/', views.privacy, name='privacy'),
     path("about/", views.about, name="about"),
     path("contact/", views.contact, name="contact"),
+    path('delete-profile/', views.delete_profile, name='delete_profile'),
 ]

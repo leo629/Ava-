@@ -182,3 +182,6 @@ MEDIA_ROOT = '/var/www/avadating/media'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = '/var/www/avadating/staticfiles'
+
+ACCOUNT_SIGNUP_REDIRECT_URL = '/gallery_form/'
+LOGIN_REDIRECT_URL = '/swipes/'

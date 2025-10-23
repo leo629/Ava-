@@ -24,6 +24,18 @@ from django.urls import reverse_lazy
 User = get_user_model()
 
 
+@login_required
+def delete_profile(request):
+    user = request.user
+
+    if request.method == "POST":
+        user.delete()  # deletes the user and cascades to profile
+        messages.success(request, "Your profile has been deleted successfully.")
+        return redirect("account_signup")  # or home page
+
+    # If GET request, show a confirmation page
+    return render(request, "myapp/confirm_delete.html")
+
 def landing_page(request):
     if request.user.is_authenticated:
         return redirect('home')  # 👈
@@ -199,7 +211,8 @@ class CustomSignupView(SignupView):
             user.phone_number = form.cleaned_data.get("phone_number")
             user.save()
 
-         return redirect("gallery_form")
+    def get_success_url(self):
+        return reverse_lazy("upload_gallery")
 
 
 # ✅ Profile view
@@ -305,7 +318,7 @@ def edit_profile(request):
 
 @login_required
 def home(request):
-    viewer_profile = request.user.profile
+    viewer_profile, created = Profile.objects.get_or_create(user=request.user)
     users = User.objects.exclude(id=request.user.id)  # exclude logged-in user
 
     min_age = request.GET.get("min_age")
@@ -468,3 +481,12 @@ def get_potential_matches(request):
         })
 
     return render(request, 'myapp/matches.html', {'matches': matches})
+
+@login_required
+def gallery_form(request):
+    if request.method == "POST":
+        images = request.FILES.getlist("images")
+        for img in images:
+            Gallery.objects.create(user=request.user, image=img)
+        return redirect("home")  # after uploading, go to home or swipe page
+    return render(request, "myapp/gallery_form.html")

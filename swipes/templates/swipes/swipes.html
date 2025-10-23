@@ -53,7 +53,8 @@
     const profileId = document.getElementById('profile-id')?.value;
     if (!profileId) return;
 
-    fetch("{% url 'swipe_action' %}", {
+    // ✅ Fixed URL namespace
+    fetch("{% url 'swipes:swipe_action' %}", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

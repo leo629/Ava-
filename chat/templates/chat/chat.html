@@ -69,7 +69,10 @@
 
 {% block scripts %}
 <script>
-  // Utility: escape HTML to prevent JS errors from user input
+  const username = "{{ other_user.username }}";  // dynamic in template
+  const chatBox = document.getElementById('chat-box');
+
+  // Utility: escape HTML
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -77,27 +80,30 @@
   }
 
   // Scroll chat to bottom
-  const chatBox = document.getElementById('chat-box');
-  if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  function scrollToBottom() {
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  }
+  scrollToBottom();
 
   // WebSocket setup
   const chatSocket = new WebSocket(
-    (location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/chat/{{ other_user.username }}/'
+    (location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + `/ws/chat/${username}/`
   );
 
   chatSocket.onopen = () => {
+    // Mark all messages as read on open
     chatSocket.send(JSON.stringify({ action: 'mark_read' }));
   };
 
-  chatSocket.onmessage = event => {
-    const data = JSON.parse(event.data);
+  chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
 
     if (data.error) {
       console.error('WebSocket error:', data.error);
       return;
     }
 
-    // Read receipt handling
+    // Read receipt
     if (data.type === 'read_receipt') {
       data.message_ids.forEach(id => {
         const dot = document.querySelector(`#dot-${id}`);
@@ -106,38 +112,39 @@
       return;
     }
 
-    // Message rendering
-    const isMe = data.sender === "{{ request.user.username }}";
-    const wrapper = document.createElement('div');
-    wrapper.className = 'flex items-end ' + (isMe ? 'justify-end' : '');
+    // Real-time chat messages
+    if (data.type === 'chat_message') {
+      const isMe = data.sender === "{{ request.user.username }}";
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex items-end ' + (isMe ? 'justify-end' : '');
 
-    if (!isMe) {
-      const avatar = document.createElement('img');
-      avatar.src = "{% if other_user.profile.profile_pic %}{{ other_user.profile.profile_pic.url }}{% else %}{% static 'images/default.jpg' %}{% endif %}";
-      avatar.className = 'w-7 h-7 rounded-full mr-2';
-      avatar.alt = "{{ other_user.username }}'s profile picture";
-      wrapper.appendChild(avatar);
+      if (!isMe) {
+        const avatar = document.createElement('img');
+        avatar.src = data.sender_profile_pic || "{% static 'images/default.jpg' %}";
+        avatar.className = 'w-7 h-7 rounded-full mr-2';
+        avatar.alt = data.sender;
+        wrapper.appendChild(avatar);
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'max-w-xs md:max-w-sm px-4 py-2 rounded-2xl text-sm shadow-sm ' +
+        (isMe ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none');
+
+      bubble.innerHTML = `
+        <p>${escapeHtml(data.message)}</p>
+        <div class="text-[10px] mt-1 opacity-70 flex items-center gap-1">
+          ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          ${isMe ? `<span id="dot-${data.id}" class="${data.is_read ? 'text-blue-300' : 'text-gray-300'}">✓✓</span>` : ''}
+        </div>
+      `;
+      wrapper.appendChild(bubble);
+      chatBox.appendChild(wrapper);
+      scrollToBottom();
     }
-
-    const bubble = document.createElement('div');
-    bubble.className = 'max-w-xs md:max-w-sm px-4 py-2 rounded-2xl text-sm shadow-sm ' +
-      (isMe ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none');
-
-    bubble.innerHTML = `
-      <p>${escapeHtml(data.message)}</p>
-      <div class="text-[10px] mt-1 opacity-70 flex items-center gap-1">
-        ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-        ${isMe ? `<span id="dot-${data.id}" class="${data.is_read ? 'text-blue-300' : 'text-gray-300'}">✓✓</span>` : ''}
-      </div>
-    `;
-
-    wrapper.appendChild(bubble);
-    chatBox.appendChild(wrapper);
-    chatBox.scrollTop = chatBox.scrollHeight;
   };
 
-  chatSocket.onerror = () => console.error('WebSocket error');
-  chatSocket.onclose = () => console.log('WebSocket closed');
+  chatSocket.onerror = (e) => console.error('WebSocket error', e);
+  chatSocket.onclose = (e) => console.error('Chat socket closed unexpectedly', e);
 
   // Sending messages
   const messageForm = document.getElementById('message-form');
@@ -149,10 +156,12 @@
 
     chatSocket.send(JSON.stringify({
       message: text,
-      receiver: "{{ other_user.username }}"
+      receiver: username
     }));
+
     input.value = '';
   });
 </script>
 {% endblock %}
+
 {% endblock %}
