@@ -1,4 +1,4 @@
-# Ava Dating App 💖
+# Ava Dating App 
 
 A global matchmaking platform built with Django.
 
