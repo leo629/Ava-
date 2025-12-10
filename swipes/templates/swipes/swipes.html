@@ -2,137 +2,173 @@
 {% load static %}
 
 {% block content %}
-<div id="swipe-container" class="relative w-full max-w-md mx-auto h-[100vh] overflow-hidden bg-black">
+<div class="relative w-full max-w-md mx-auto h-[100vh] overflow-hidden bg-black">
+
+  <!-- Ask Browser for GPS Automatically -->
+  <script>
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          // Send location once to Django
+          fetch(`?lat=${lat}&lon=${lon}`, { method: "GET" });
+        },
+        err => console.warn("Location denied:", err),
+        { enableHighAccuracy: true }
+      );
+    }
+  </script>
+
   {% if profile %}
     <div id="profile-card"
-         class="absolute inset-0 bg-black shadow-xl overflow-hidden transform transition-all duration-300 rounded-2xl">
+         class="absolute inset-0 bg-black shadow-xl overflow-hidden transform transition-all duration-500 rounded-2xl opacity-0 scale-90">
 
-      <!-- Profile Image -->
+      <!-- MAIN IMAGE -->
       <img id="profile-image"
            src="{% if profile.profile_pic %}{{ profile.profile_pic.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
-           class="w-full h-full object-cover transition-opacity duration-1000 opacity-100"
+           class="w-full h-full object-cover transition-opacity duration-700"
            alt="{{ profile.user.username }}">
 
-      <!-- Overlay info -->
+      <!-- GRADIENT INFO OVERLAY -->
       <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-white">
         <h2 id="profile-username" class="text-3xl font-bold">{{ profile.user.username }}</h2>
+
+        <p id="profile-distance" class="text-lg opacity-80 mt-1">
+          {% if profile.distance %}
+            {{ profile.distance }} km away
+          {% endif %}
+        </p>
+
         <p id="profile-bio" class="text-base mt-1">{{ profile.bio|default:"No bio yet." }}</p>
       </div>
 
-      <!-- Hidden inputs -->
+      <!-- Hidden ID -->
       <input type="hidden" id="profile-id" value="{{ profile.id }}">
 
-      <!-- Like / Dislike buttons -->
-      <div class="absolute bottom-20 left-0 right-0 flex justify-center space-x-12">
+      <!-- ACTION BUTTONS -->
+      <div class="absolute bottom-20 left-0 right-0 flex justify-center gap-12">
+
+        <!-- Dislike -->
         <button onclick="sendSwipe('dislike')"
-                class="bg-red-500 text-white p-6 rounded-full shadow-lg hover:bg-red-600 text-2xl transition">
+                class="bg-red-500 text-white p-6 rounded-full shadow-lg hover:bg-red-600 text-3xl transition transform hover:scale-110">
           ❌
         </button>
+
+        <!-- Like -->
         <button onclick="sendSwipe('like')"
-                class="bg-green-500 text-white p-6 rounded-full shadow-lg hover:bg-green-600 text-2xl transition">
+                class="bg-green-500 text-white p-6 rounded-full shadow-lg hover:bg-green-600 text-3xl transition transform hover:scale-110">
           ❤️
         </button>
+
+        <!-- Super Like -->
+        <button onclick="sendSwipe('superlike')"
+                class="bg-blue-500 text-white p-6 rounded-full shadow-lg hover:bg-blue-600 text-3xl transition transform hover:scale-125">
+          ⭐
+        </button>
+
       </div>
     </div>
+
   {% else %}
-    <p id="no-profiles" class="text-center text-gray-500 mt-20">No more profiles to swipe.</p>
+    <p id="no-profiles" class="text-center text-gray-500 mt-20">No more profiles near you.</p>
   {% endif %}
 </div>
 
 <!-- MATCH ALERT -->
 <div id="match-alert"
-     class="hidden fixed inset-0 bg-black/80 flex items-center justify-center text-white text-4xl font-bold z-50">
+     class="hidden fixed inset-0 bg-black/80 flex items-center justify-center text-white text-5xl font-bold z-50 animate-pulse">
   🎉 It's a Match!
 </div>
+
 
 <script>
   let galleryInterval;
 
-  // Handle swipe actions
+  // Add initial fade-in animation
+  window.onload = () => {
+    const card = document.getElementById("profile-card");
+    if (card) {
+      setTimeout(() => {
+        card.classList.remove("opacity-0", "scale-90");
+        card.classList.add("opacity-100", "scale-100");
+      }, 100);
+    }
+  };
+
+  // Swipe request
   function sendSwipe(action) {
-    const profileId = document.getElementById('profile-id')?.value;
+    const profileId = document.getElementById("profile-id")?.value;
     if (!profileId) return;
 
-    // ✅ Fixed URL namespace
     fetch("{% url 'swipes:swipe_action' %}", {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': '{{ csrf_token }}'
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": "{{ csrf_token }}"
       },
       body: new URLSearchParams({ profile_id: profileId, action: action })
     })
     .then(res => res.json())
     .then(data => {
-      if (data.status === 'ok' && data.match === true) {
-        showMatchAlert();
-      }
+
+      if (data.match === true) showMatchAlert();
 
       if (data.next_profile) {
         loadNextProfile(data.next_profile);
       } else {
-        document.getElementById('swipe-container').innerHTML =
-          '<p class="text-center text-gray-500 mt-20">No more profiles to swipe.</p>';
+        document.getElementById("swipe-container").innerHTML =
+          '<p class="text-center text-gray-500 mt-20">No more profiles nearby.</p>';
       }
-    })
-    .catch(err => console.error('Swipe error:', err));
+    });
   }
 
-  // Replace current profile with next one
   function loadNextProfile(p) {
-    const card = document.getElementById('profile-card');
-    if (!card) return;
+    const card = document.getElementById("profile-card");
+    const img = document.getElementById("profile-image");
+    const username = document.getElementById("profile-username");
+    const bio = document.getElementById("profile-bio");
+    const distance = document.getElementById("profile-distance");
+    const idField = document.getElementById("profile-id");
 
-    const img = document.getElementById('profile-image');
-    const username = document.getElementById('profile-username');
-    const bio = document.getElementById('profile-bio');
-    const idField = document.getElementById('profile-id');
+    // Fade out
+    card.classList.add("opacity-0", "scale-90");
 
-    idField.value = p.id;
-    username.textContent = p.username;
-    bio.textContent = p.bio || "No bio yet.";
-    img.src = p.images?.[0] || "{% static 'images/default_profile.jpg' %}";
-
-    // Reset animation
-    card.style.transform = "translate(0,0) rotate(0)";
-
-    // Reset gallery rotation
-    if (galleryInterval) clearInterval(galleryInterval);
-    if (p.images && p.images.length > 1) {
-      let index = 0;
-      galleryInterval = setInterval(() => {
-        img.style.opacity = 0;
-        setTimeout(() => {
-          index = (index + 1) % p.images.length;
-          img.src = p.images[index];
-          img.style.opacity = 1;
-        }, 400);
-      }, 4000);
-    }
-  }
-
-  // Show "It's a Match" alert briefly
-  function showMatchAlert() {
-    const alertBox = document.getElementById('match-alert');
-    alertBox.classList.remove('hidden');
     setTimeout(() => {
-      alertBox.classList.add('hidden');
-    }, 2000);
+      idField.value = p.id;
+      username.textContent = p.username;
+      bio.textContent = p.bio || "No bio yet.";
+      img.src = p.images?.[0] || "{% static 'images/default_profile.jpg' %}";
+      distance.textContent = p.distance ? `${p.distance} km away` : "";
+
+      // Reset gallery
+      if (galleryInterval) clearInterval(galleryInterval);
+      if (p.images && p.images.length > 1) {
+        let index = 0;
+        galleryInterval = setInterval(() => {
+          img.style.opacity = 0;
+          setTimeout(() => {
+            index = (index +  1) % p.images.length;
+            img.src = p.images[index];
+            img.style.opacity = 1;
+          }, 300);
+        }, 4000);
+      }
+
+      // Fade back in
+      card.classList.remove("opacity-0", "scale-90");
+      card.classList.add("opacity-100", "scale-100");
+
+    }, 300);
   }
 
-  // Initial gallery rotation setup
-  {% if profile %}
-  loadNextProfile({
-    id: {{ profile.id }},
-    username: "{{ profile.user.username }}",
-    bio: "{{ profile.bio|default:'No bio yet.' }}",
-    images: [
-      {% if profile.profile_pic %}"{{ profile.profile_pic.url }}",{% endif %}
-      {% for img in profile.user.gallery_set.all %}
-        "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ]
-  });
-  {% endif %}
+  function showMatchAlert() {
+    const alert = document.getElementById("match-alert");
+    alert.classList.remove("hidden");
+    setTimeout(() => alert.classList.add("hidden"), 2000);
+  }
 </script>
+
 {% endblock %}
+

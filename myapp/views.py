@@ -19,9 +19,89 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
-
+from django.views.decorators.http import require_POST, require_GET
+import maths
 
 User = get_user_model()
+
+
+def _is_ajax(request):
+    return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Return distance in km using haversine formula."""
+    if None in [lat1, lon1, lat2, lon2]:
+        return None
+
+    R = 6371  # Earth radius in KM
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return round(R * c, 1)
+
+
+# -----------------------------
+# Save User Location
+# -----------------------------
+@login_required
+@require_POST
+def save_location(request):
+    lat = request.POST.get("lat")
+    lon = request.POST.get("lon")
+    city = request.POST.get("city", "")
+
+    if not lat or not lon:
+        return JsonResponse({"status": "error", "message": "Missing coordinates"}, status=400)
+
+    profile = request.user.profile
+    profile.latitude = lat
+    profile.longitude = lon
+    if city:
+        profile.city = city
+    profile.save()
+
+    return JsonResponse({"status": "ok"})
+
+
+# -----------------------------
+# Users Near You (Matches Page)
+# -----------------------------
+@login_required
+def users_near_you(request):
+    current_user = request.user
+    my_profile = current_user.profile
+
+    # ask for location if missing
+    if not my_profile.latitude or not my_profile.longitude:
+        return render(request, "ask_location.html")
+
+    # get all profiles except yourself
+    profiles = Profile.objects.exclude(user=current_user)
+
+    nearby = []
+    for profile in profiles:
+        dist = calculate_distance(
+            float(my_profile.latitude),
+            float(my_profile.longitude),
+            float(profile.latitude) if profile.latitude else None,
+            float(profile.longitude) if profile.longitude else None,
+        )
+
+        if dist is not None:
+            profile.distance = dist
+            nearby.append(profile)
+
+    # Sort by nearest first
+    nearby_sorted = sorted(nearby, key=lambda x: x.distance)
+
+    return render(request, "users_near_you.html", {"profiles": nearby_sorted})
 
 
 @login_required
@@ -73,57 +153,115 @@ def privacy(request):
     return render(request, 'myapp/privacy.html')
 
 
-# ✅ Like / Unlike user
+# -----------------------------
+# LIKE / SUPERLIKE / UNLIKE
+# -----------------------------
 @login_required
-@csrf_exempt
+@require_POST
 def like_user(request, user_id):
     target = get_object_or_404(User, id=user_id)
+    action = request.POST.get("action", "toggle").lower()
+    is_super = (action == "superlike")
 
     if target == request.user:
-        messages.warning(request, "You cannot like yourself.")
-        return redirect("profile", username=target.username)
+        return JsonResponse({"status": "error", "message": "Cannot like yourself"}, status=400)
 
-    like, created = Like.objects.get_or_create(
-        user=request.user, liked_user=target
+    like_obj, created = Like.objects.get_or_create(
+        user=request.user,
+        liked_user=target,
+        defaults={"is_superlike": is_super}
     )
 
-    if not created:
-        # already liked, so unlike
-        like.delete()
-        messages.info(request, f"You unliked {target.username}.")
-    else:
-        messages.success(request, f"You liked {target.username} ❤️")
+    # Toggle undo like
+    if not created and action == "toggle":
+        like_obj.delete()
+        Match.objects.filter(user=request.user, target=target).delete()
+        Match.objects.filter(user=target, target=request.user).delete()
 
-        # ✅ also create Match record
-        Match.objects.update_or_create(
-            user=request.user, target=target,
-            defaults={'liked': True}
+        if _is_ajax(request):
+            return JsonResponse({"status": "ok", "action": "unliked"})
+
+        messages.info(request, "Unlike removed.")
+        return redirect("profile", username=target.username)
+
+    # Update superlike flag if changed
+    if not created:
+        if like_obj.is_superlike != is_super:
+            like_obj.is_superlike = is_super
+            like_obj.save()
+
+    # Update our match record
+    Match.objects.update_or_create(
+        user=request.user, target=target, defaults={"liked": True}
+    )
+
+    # Check if target also liked you = MATCH!
+    if Match.objects.filter(user=target, target=request.user, liked=True).exists():
+        send_notification(
+            sender=request.user,
+            recipient=target,
+            notification_type="match",
+            message=f"You and {request.user.username} matched!"
         )
 
-        # ✅ if the other user liked back → notify about match
-        if Match.objects.filter(user=target, target=request.user, liked=True).exists():
-            send_notification(
-                sender=request.user,
-                recipient=target,
-                notification_type='match',
-                message=f"You and {request.user.username} matched!"
-            )
+    # AJAX response
+    if _is_ajax(request):
+        return JsonResponse({
+            "status": "ok",
+            "action": "superliked" if is_super else "liked",
+            "target_id": target.id,
+            "super": is_super
+        })
 
+    messages.success(request, "Liked!")
     return redirect("profile", username=target.username)
 
 
-# ✅ Remove like & match
+# -----------------------------
+# DISLIKE (SWIPE LEFT)
+# -----------------------------
 @login_required
-@csrf_exempt
+@require_POST
 def dislike_user(request, user_id):
-    other = get_object_or_404(User, id=user_id)
+    target = get_object_or_404(User, id=user_id)
 
-    Like.objects.filter(user=request.user, liked_user=other).delete()
-    Match.objects.filter(user=request.user, target=other).delete()
-    Match.objects.filter(user=other, target=request.user).delete()
+    Like.objects.filter(user=request.user, liked_user=target).delete()
+    Match.objects.filter(user=request.user, target=target).delete()
+    Match.objects.filter(user=target, target=request.user).delete()
 
-    messages.info(request, f"You disliked {other.username}.")
-    return JsonResponse({"status": "disliked"})
+    if _is_ajax(request):
+        return JsonResponse({"status": "ok", "action": "disliked", "target_id": target.id})
+
+    messages.info(request, "User disliked.")
+    return redirect("profile", username=target.username)
+
+
+# -----------------------------
+# Swipe Page (Carousel)
+# -----------------------------
+@login_required
+def swipe(request):
+    user_profile = request.user.profile
+
+    if not user_profile.latitude or not user_profile.longitude:
+        return render(request, "ask_location.html")
+
+    # Exclude: yourself + already liked or disliked
+    seen_ids = Like.objects.filter(user=request.user).values_list("liked_user", flat=True)
+
+    profiles = Profile.objects.exclude(user=request.user).exclude(user__id__in=seen_ids)
+
+    # Calculate distances
+    for p in profiles:
+        p.distance = calculate_distance(
+            float(user_profile.latitude),
+            float(user_profile.longitude),
+            float(p.latitude) if p.latitude else None,
+            float(p.longitude) if p.longitude else None,
+        )
+
+    return render(request, "swipe.html", {"profiles": profiles})
+
 
 
 # ✅ Gallery API
@@ -162,26 +300,9 @@ def like_back(request, user_id):
     return redirect('who_liked_me')
 
 
-# ✅ Save user location
-@login_required
-@csrf_exempt
-def save_location(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        lat = data.get("latitude")
-        lng = data.get("longitude")
-
-        profile = request.user.profile
-        profile.latitude = lat
-        profile.longitude = lng
-        profile.save()
-
-        return JsonResponse({"status": "success"})
-    return JsonResponse({"error": "Invalid request"}, status=400)
-
-
+#-----------------
 # ✅ Custom Signup
-
+#-----------------
 
 class CustomSignupView(SignupView):
     form_class = CustomSignupForm
